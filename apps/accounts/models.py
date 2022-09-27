@@ -31,7 +31,7 @@ class Group(BaseModel):
     is_active = models.BooleanField(default=True)
 
 class Activity(BaseModel):
-    id = models.CharField(max_length=15, unique=True)
+    ext_id = models.CharField(max_length=15, unique=True)
     email = models.CharField(max_length=50)
     group = models.ForeignKey(Group, on_delete=models.DO_NOTHING)
     responsible = models.CharField(max_length=100)

@@ -17,16 +17,16 @@ class AccountAdminForm(forms.ModelForm):
             'reset_password_code',
             'raw_password'
         )
-class ActivityAdminForm(forms.ModelForm):
-    class Meta:
-        model = Activity
-        fields = (
-            'name',
-            'description',
-            'group',
-            'date',
-            'location_name'
-        )
+# class ActivityAdminForm(forms.ModelForm):
+#     class Meta:
+#         model = Activity
+#         fields = (
+#             'name',
+#             'description',
+#             'group',
+#             'date',
+#             'location_name'
+#         )
 class GroupAdminForm(forms.ModelForm):
     class Meta:
         model = Group

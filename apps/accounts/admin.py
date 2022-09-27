@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .forms import AccountAdminForm, ActivityAdminForm, GroupAdminForm, RequestAdminForm
+from .forms import AccountAdminForm, GroupAdminForm, RequestAdminForm
 from .models import Account, Activity, Group, Request
 
 
@@ -58,8 +58,8 @@ class ActivityAdmin(admin.ModelAdmin):
         'uuid',
         'name',
         'group',
-        'date',
-        'location_name'
+
+
     ]
     list_display_links = [
         'uuid'
@@ -68,7 +68,7 @@ class ActivityAdmin(admin.ModelAdmin):
 
     search_fields = [
         'name',
-        'location_name'
+
     ]
 
 @admin.register(Group)

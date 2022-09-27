@@ -116,8 +116,8 @@ class ActivitySerializer(serializers.ModelSerializer):
             'name',
             'description',
             'group',
-            'date',
-            'location_name'
+
+
         )
         extra_kwargs = {
             'uuid': {
