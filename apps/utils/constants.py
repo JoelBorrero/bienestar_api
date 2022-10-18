@@ -6,14 +6,16 @@ ACTIVITY_CATEGORIES = (
     ('ema', 'Eventos masivos'),
     ('int', 'Actividades internas'),
     ('pub', 'Publicaciones'),
+    ('nan', 'No encontrado')
 )
 
 ACTIVITY_STATUSES = (
-    ('a', 'Aprobada'),
+    ('a', 'Aprobado'),
     ('d', 'Denegado'),
     ('i', 'Aprobado - Importante'),
     ('p', 'Pendiente'),
     ('t', 'Terminado'),
+    ('n', 'No encontrado')
 )
 
 REQUEST_STATUSES = (

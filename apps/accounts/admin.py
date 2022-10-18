@@ -1,35 +1,33 @@
 from django.contrib import admin
 
-from .forms import AccountAdminForm, GroupAdminForm, RequestAdminForm
+from .forms import AccountAdminForm, ActivityAdminForm, GroupAdminForm, RequestAdminForm
 from .models import Account, Activity, Group, Request
 
 
 @admin.register(Account)
 class AccountAdmin(admin.ModelAdmin):
-    list_display = [
+    list_display = (
         'uuid',
         'username',
         'date_joined',
         'role',
         'is_active',
         'deleted',
-    ]
-    list_display_links = [
-        'uuid'
-    ]
+    )
+    list_display_links = ('uuid', )
     form = AccountAdminForm
-    actions = [
+    actions = (
         'enable',
         'disable',
         'restore',
         'logical_erase'
-    ]
-    search_fields = [
+    )
+    search_fields = (
         'email',
         'username',
         'first_name',
         'last_name'
-    ]
+    )
 
     def enable(self, request, queryset):
         for ad in queryset:
@@ -52,49 +50,49 @@ class AccountAdmin(admin.ModelAdmin):
     logical_erase.description = 'Delete User(s)'
     restore.description = 'Restore User(s)'
 
+
 @admin.register(Activity)
 class ActivityAdmin(admin.ModelAdmin):
-    list_display = [
-        'uuid',
+    list_display = (
+        'ext_id',
         'name',
         'group',
-
-
-    ]
-    list_display_links = [
-        'uuid'
-    ]
-    # form = ActivityAdminForm
-
-    search_fields = [
+        'start_date',
+        'status'
+    )
+    list_filter = (
+        'status',
+        'group'
+    )
+    search_fields = (
         'name',
+        # 'group'
+    )
 
-    ]
 
 @admin.register(Group)
 class GroupAdmin(admin.ModelAdmin):
-    list_display = [
+    list_display = (
         'uuid',
         'name',
         'description',
         'email',
         'is_active'
-    ]
-    list_display_links = [
-        'uuid'
-    ]
+    )
+    list_display_links = ('uuid', )
     form = GroupAdminForm
 
-    search_fields = [
+    search_fields = (
         'uuid',
         'name',
         'description',
         'email',
-    ]
+    )
+
 
 @admin.register(Request)
 class RequestAdmin(admin.ModelAdmin):
-    list_display = [
+    list_display = (
         'uuid',
         'title',
         'description',
@@ -103,14 +101,12 @@ class RequestAdmin(admin.ModelAdmin):
         'date_end',
         'category',
         'status'
-    ]
-    list_display_links = [
-        'uuid'
-    ]
+    )
+    list_display_links = ('uuid', )
     form = RequestAdminForm
-    search_fields = [
+    search_fields = (
         'uuid',
         'title',
         'description',
         'category',
-    ]
+    )
