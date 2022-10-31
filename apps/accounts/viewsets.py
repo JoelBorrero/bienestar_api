@@ -1,22 +1,26 @@
+from django.contrib.auth import authenticate, logout
 from rest_framework import viewsets
+from rest_framework.authtoken.models import Token
 from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
-from .models import Account, Activity, Group, Request
+from .models import Account, Activity, Group
 from .serializers import (
     AccountRegisterSerializer,
     AccountSerializer,
-    CheckEmailSerializer,
-    RequestSerializer,
+    ActivitySerializer,
+    EmptySerializer,
+    GroupSerializer,
+    SendResetCodeSerializer,
     UserLoginSerializer,
     UserResetPasswordCodeSerializer,
-    UserResetPasswordSerializer,
-    UserResetPasswordSetPasswordSerializer, GroupSerializer, ActivitySerializer
+    UserResetPasswordSetPasswordSerializer, get_token,
 )
+from apps.utils.email import send_email
+from apps.utils.sms import send_sms
 from apps.utils.permissions import IsAccount, IsRegisterEnabled
-from apps.utils.viewsets import OwnerModelViewSet
 
 
 class AccountRegisterViewSet(viewsets.GenericViewSet):
@@ -25,23 +29,19 @@ class AccountRegisterViewSet(viewsets.GenericViewSet):
 
     @action(detail=False,
             methods=['POST'],
-            permission_classes=[AllowAny],
-            serializer_class=CheckEmailSerializer)
-    def check_email(self, request):
-        """User check email."""
-        serializer = self.serializer_class(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        return Response()
-
-    @action(detail=False,
-            methods=['POST'],
             permission_classes=[AllowAny, IsRegisterEnabled],
             serializer_class=AccountRegisterSerializer)
     def register(self, request):
         serializer = self.serializer_class(data=request.data)
+        data = dict()
         if serializer.is_valid(raise_exception=True):
             serializer.save()
-        return Response(serializer.data)
+            data = serializer.data
+            if request.data.get('authenticate'):
+                user = authenticate(username=data.get('email'), password=request.data.get('raw_password'))
+                token = get_token(user)
+                data['token'] = token.key
+        return Response(data)
 
 
 class AccountAuthViewSet(viewsets.GenericViewSet):
@@ -66,16 +66,37 @@ class AccountAuthViewSet(viewsets.GenericViewSet):
             'token': token
         })
 
+    @action(detail=False, methods=['POST'], serializer_class=EmptySerializer)
+    def logout(self, request):
+        """User sign out"""
+        token = Token.objects.filter(user=request.user.id).first()
+        logout(request)
+        if token:
+            token.delete()
+        return Response({'success': True})
+
     @action(detail=False,
             methods=['POST'],
             permission_classes=[AllowAny],
-            serializer_class=UserResetPasswordSerializer)
+            serializer_class=SendResetCodeSerializer)
     def send_reset_code(self, request):
-        username = request.data.get('username')
-        user = get_object_or_404(Account, username=username)
+        email = request.data.get('email')
+        user = get_object_or_404(Account, username=email)
         user.generate_reset_password_code()
+        sending_method = request.data.get('sending_method')
+        success = True
+        if sending_method == 'sms':
+            data = send_sms('+573022327626', f'Tu código de verificación es {user.reset_password_code}')
+        elif sending_method == 'email':
+            template = "Tu código de verificación es {{ code }}"
+            context = {"code": user.reset_password_code}
+            data = send_email('Reiniciar contraseña', email, template, context)
+        else:
+            success = False
+            data = 'Missing or wrong parameter'
         return Response({
-            "success": True
+            "success": success,
+            "data": data
         })
 
     @action(detail=False,
@@ -95,13 +116,17 @@ class AccountAuthViewSet(viewsets.GenericViewSet):
             permission_classes=[AllowAny],
             serializer_class=UserResetPasswordSetPasswordSerializer)
     def set_new_password(self, request):
-        username = request.data.get('username')
+        email = request.data.get('email')
         code = request.data.get('code')
         password = request.data.get('password')
-        user = get_object_or_404(Account, username=username, reset_password_code=code)
-        user.reset_password(password)
+        user = get_object_or_404(Account, username=email, reset_password_code=code)
+        if all((email, code, password)):
+            user.reset_password(password)
+            success = True
+        else:
+            success = False
         return Response({
-            "success": True
+            "success": success
         })
 
     @action(detail=False, methods=['GET'])
@@ -116,28 +141,6 @@ class AccountAuthViewSet(viewsets.GenericViewSet):
             serializer.save()
         return Response(serializer.data)
 
-
-class AccountOwnerViewSet(OwnerModelViewSet):
-    serializer_class = AccountRegisterSerializer
-    queryset = Account.objects.filter(deleted=False)
-    search_fields = ('username', 'first_name', 'last_name',)
-
-    @action(detail=True, methods=['DELETE'], serializer_class=None)
-    def delete(self, request, uuid=None):
-        result = self.get_object().logical_erase()
-        return Response(result)
-
-    @action(detail=True, methods=['POST'], serializer_class=None)
-    def disable(self, request, uuid=None):
-        result = self.get_object().disable()
-        return Response(result)
-
-    @action(detail=True, methods=['POST'], serializer_class=None)
-    def enable(self, request, uuid=None):
-        result = self.get_object().enable()
-        return Response(result)
-
-
 class ActivityViewSet(viewsets.ModelViewSet):
     serializer_class = ActivitySerializer
     queryset = Activity.objects.filter(deleted=False)
@@ -146,8 +149,3 @@ class ActivityViewSet(viewsets.ModelViewSet):
 class GroupViewSet(viewsets.ModelViewSet):
     serializer_class = GroupSerializer
     queryset = Group.objects.filter(deleted=False)
-
-
-class RequestViewSet(viewsets.ModelViewSet):
-    serializer_class = RequestSerializer
-    queryset = Request.objects.filter(deleted=False)

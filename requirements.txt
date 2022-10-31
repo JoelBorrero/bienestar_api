@@ -103,7 +103,7 @@ six==1.16.0
 sniffio==1.2.0
 sqlparse==0.4.2
 tinycss2==1.1.1
-# twilio==6.38.0
+twilio==6.38.0
 Twisted==21.7.0
 txaio==21.2.1
 typing-extensions==4.0.1

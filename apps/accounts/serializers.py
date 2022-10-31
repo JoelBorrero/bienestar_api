@@ -2,22 +2,45 @@ from django.contrib.auth import authenticate
 from rest_framework import serializers
 from rest_framework.authtoken.models import Token
 
-from .models import Account, Activity, Group, Request
+from .models import Account, Activity, Group
 from apps.utils.exceptions import EmailValidationError
 from apps.utils.shortcuts import get_object_or_none
 
 
-class UserResetPasswordSerializer(serializers.Serializer):
-    username = serializers.CharField(min_length=2, max_length=64)
+def get_token(user):
+    token = get_object_or_none(Token, user=user)
+    if token:
+        token.delete()
+    token = Token.objects.create(user=user)
+    return token
 
-    def update(self, instance, validated_data):
-        pass
+
+class SendResetCodeSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    sending_method = serializers.CharField(max_length=5, default='sms', help_text='sms or email')
+
+    def validate(self, data):
+        if Account.objects.filter(username=data.get('email')):
+            raise EmailValidationError()
+        return data
 
     def create(self, validated_data):
         pass
 
+    def update(self, instance, validated_data):
+        pass
 
-class UserResetPasswordCodeSerializer(UserResetPasswordSerializer):
+
+class EmptySerializer(serializers.Serializer):
+    def create(self, validated_data):
+        pass
+
+    def update(self, instance, validated_data):
+        pass
+
+
+class UserResetPasswordCodeSerializer(serializers.Serializer):
+    email = serializers.EmailField()
     code = serializers.CharField(max_length=6)
 
 
@@ -26,14 +49,14 @@ class UserResetPasswordSetPasswordSerializer(UserResetPasswordCodeSerializer):
 
 
 class UserLoginSerializer(serializers.Serializer):
-    username = serializers.CharField(min_length=2, max_length=64)
+    email = serializers.EmailField()
     password = serializers.CharField()
 
     def update(self, instance, validated_data):
         pass
 
     def validate(self, data):
-        user = authenticate(username=data.get('username'), password=data.get('password'))
+        user = authenticate(username=data.get('email'), password=data.get('password'))
         if not user:
             raise serializers.ValidationError({
                 'error': 'Las credenciales no son válidas'
@@ -47,46 +70,21 @@ class UserLoginSerializer(serializers.Serializer):
 
     def create(self, data):
         user = self.context['user']
-        token = get_object_or_none(Token, user=user)
-        if token:
-            token.delete()
-        token, created = Token.objects.update_or_create(user=user)
+        token = get_token(user)
         user = AccountSerializer(user.account)
         return user.data, token.key
-
-
-class CheckEmailSerializer(serializers.Serializer):
-    email = serializers.EmailField()
-
-    def validate(self, data):
-        if Account.objects.filter(email=data.get('email')):
-            raise EmailValidationError()
-        return data
-
-    def create(self, validated_data):
-        pass
-
-    def update(self, instance, validated_data):
-        pass
 
 
 class AccountSerializer(serializers.ModelSerializer):
     class Meta:
         model = Account
         fields = (
-            'uuid',
-            'username',
             'email',
             'first_name',
             'last_name',
             'role',
             'is_active'
         )
-        extra_kwargs = {
-            'uuid': {
-                'read_only': True
-            }
-        }
 
 
 class AccountRegisterSerializer(AccountSerializer):
@@ -107,57 +105,31 @@ class AccountRegisterSerializer(AccountSerializer):
             }
         }
 
+    def create(self, validated_data):
+        validated_data['username'] = validated_data['email']
+        instance = super().create(validated_data)
+        return instance
+
 
 class ActivitySerializer(serializers.ModelSerializer):
     class Meta:
         model = Activity
         fields = (
-            'uuid',
+            'pk',
+            'ext_id',
             'name',
             'description',
             'group',
-
-
         )
-        extra_kwargs = {
-            'uuid': {
-                'read_only': True
-            }
-        }
+        depth = 1
 
 
 class GroupSerializer(serializers.ModelSerializer):
     class Meta:
         model = Group
         fields = (
-            'uuid',
             'name',
             'description',
             'email',
             'is_active'
         )
-        extra_kwargs = {
-            'uuid': {
-                'read_only': True
-            }
-        }
-
-
-class RequestSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Request
-        fields = (
-            'uuid',
-            'title',
-            'description',
-            'group_id',
-            'date_start',
-            'date_end',
-            'category',
-            'status',
-        )
-        extra_kwargs = {
-            'uuid': {
-                'read_only': True
-            }
-        }

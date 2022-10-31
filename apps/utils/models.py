@@ -1,21 +1,14 @@
-import uuid
-
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import User, UserManager
 from django.contrib.gis.db import models
 from django.utils.crypto import get_random_string
 from django_lifecycle import LifecycleModel
 
-from .choices import CUSTOMER, ROLES
+from .choices import GROUP, ROLES
 from .managers import ModelModelManager
 
 
 class BaseModel(LifecycleModel):
-    uuid = models.UUIDField(
-        default=uuid.uuid4,
-        editable=False,
-        unique=True
-    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     deleted = models.BooleanField(default=False, editable=False)
@@ -34,26 +27,10 @@ class BaseModel(LifecycleModel):
 
 class BaseModelUser(BaseModel, User):
     objects = UserManager()
-    validate_code = models.CharField(
-        max_length=10,
-        blank=True,
-        null=True
-    )
-    role = models.CharField(
-        max_length=20,
-        choices=ROLES,
-        default=CUSTOMER,
-        blank=True,
-        null=True
-    )
-    raw_password = models.CharField(
-        max_length=255
-    )
-    reset_password_code = models.CharField(
-        max_length=6,
-        blank=True,
-        null=True
-    )
+    validate_code = models.CharField(max_length=10, blank=True, null=True)
+    role = models.CharField('rol', max_length=15, choices=ROLES, default=GROUP)
+    raw_password = models.CharField(max_length=255)
+    reset_password_code = models.CharField(max_length=6, blank=True, null=True)
     deleted = models.BooleanField(default=False)
 
     class Meta:
@@ -102,16 +79,3 @@ class BaseModelUser(BaseModel, User):
         self.is_active = True
         self.deleted = False
         self.save(update_fields=['is_active', 'deleted'])
-
-
-class BaseNameModel(BaseModel):
-    name = models.CharField(
-        max_length=50,
-        unique=True
-    )
-
-    class Meta:
-        abstract = True
-
-    def __str__(self):
-        return self.name

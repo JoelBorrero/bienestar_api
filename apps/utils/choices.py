@@ -1,13 +1,11 @@
-ACCOUNTING = 'accounting'
-CUSTOMER = 'customer'
-HUMAN_RESOURCES = 'hr'
-MANAGER = 'manager'
-OWNER = 'owner'
+ADMIN = 'administrador'
+GROUP = 'grupo'
+PROMOTER = 'promotor'
+SUPERVISOR = 'supervisor'
 
 ROLES = (
-    (ACCOUNTING, ACCOUNTING.title()),
-    (CUSTOMER, CUSTOMER.title()),
-    (HUMAN_RESOURCES, 'Human Resources'),
-    (MANAGER, MANAGER.title()),
-    (OWNER, OWNER.title())
+    (ADMIN, ADMIN.title()),
+    (GROUP, GROUP.title()),
+    (PROMOTER, PROMOTER.title()),
+    (SUPERVISOR, SUPERVISOR.title()),
 )

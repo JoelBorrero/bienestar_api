@@ -17,10 +17,3 @@ ACTIVITY_STATUSES = (
     ('t', 'Terminado'),
     ('n', 'No encontrado')
 )
-
-REQUEST_STATUSES = (
-    ('a', 'Aprobada'),
-    ('p', 'Pendiente'),
-    ('r', 'Rechazada'),
-    ('t', 'Tramite'),
-)

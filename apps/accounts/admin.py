@@ -1,20 +1,19 @@
 from django.contrib import admin
 
-from .forms import AccountAdminForm, ActivityAdminForm, GroupAdminForm, RequestAdminForm
-from .models import Account, Activity, Group, Request
+from .forms import AccountAdminForm, GroupAdminForm
+from .models import Account, Activity, Group
 
 
 @admin.register(Account)
 class AccountAdmin(admin.ModelAdmin):
     list_display = (
-        'uuid',
         'username',
         'date_joined',
         'role',
         'is_active',
         'deleted',
     )
-    list_display_links = ('uuid', )
+    list_filter = ('role',)
     form = AccountAdminForm
     actions = (
         'enable',
@@ -23,7 +22,6 @@ class AccountAdmin(admin.ModelAdmin):
         'logical_erase'
     )
     search_fields = (
-        'email',
         'username',
         'first_name',
         'last_name'
@@ -53,60 +51,25 @@ class AccountAdmin(admin.ModelAdmin):
 
 @admin.register(Activity)
 class ActivityAdmin(admin.ModelAdmin):
-    list_display = (
-        'ext_id',
-        'name',
-        'group',
-        'start_date',
-        'status'
-    )
-    list_filter = (
-        'status',
-        'group'
-    )
-    search_fields = (
-        'name',
-        # 'group'
-    )
+    list_display = ('ext_id', 'name', 'group', 'start_date', 'status')
+    list_filter = ('status', 'group')
+    search_fields = ('name',)
 
 
 @admin.register(Group)
 class GroupAdmin(admin.ModelAdmin):
     list_display = (
-        'uuid',
+        'pk',
         'name',
+        'username',
         'description',
-        'email',
         'is_active'
     )
-    list_display_links = ('uuid', )
+    list_display_links = ('name',)
     form = GroupAdminForm
-
     search_fields = (
-        'uuid',
+        'pk',
         'name',
         'description',
-        'email',
-    )
-
-
-@admin.register(Request)
-class RequestAdmin(admin.ModelAdmin):
-    list_display = (
-        'uuid',
-        'title',
-        'description',
-        'group_id',
-        'date_start',
-        'date_end',
-        'category',
-        'status'
-    )
-    list_display_links = ('uuid', )
-    form = RequestAdminForm
-    search_fields = (
-        'uuid',
-        'title',
-        'description',
-        'category',
+        'username',
     )

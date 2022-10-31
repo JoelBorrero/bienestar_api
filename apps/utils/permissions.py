@@ -1,5 +1,6 @@
 from rest_framework.permissions import BasePermission
 
+from .choices import PROMOTER, SUPERVISOR
 from apps.utils.exceptions import RegisterDisabledValidationError
 from apps.utils.redis import client as redis
 
@@ -13,13 +14,13 @@ class IsAccount(BasePermission):
         return hasattr(request.user, 'account')
 
 
-class IsCompanyOwner(BasePermission):
+class IsPromoter(BasePermission):
     """
-    Allows access only to account owners.
+    Allows access only to promoters.
     """
 
     def has_permission(self, request, view):
-        return bool(request.user.account.role == 'owner')
+        return bool(request.user.account.role == PROMOTER)
 
 
 class IsRegisterEnabled(BasePermission):
@@ -31,3 +32,12 @@ class IsRegisterEnabled(BasePermission):
         if not redis.get_json('setup').get('allow_register'):
             raise RegisterDisabledValidationError()
         return True
+
+
+class IsSupervisor(BasePermission):
+    """
+    Allows access only to supervisors.
+    """
+
+    def has_permission(self, request, view):
+        return bool(request.user.account.role == SUPERVISOR)

@@ -11,7 +11,6 @@ volumes:
 
 services:
   backend:
-    container_name: backend
     restart: on-failure
     build: .
     env_file: .env

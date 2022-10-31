@@ -11,62 +11,20 @@ class Setup(LifecycleModel):
     disable_user_when_register = models.BooleanField(default=False)
     http_server_on = models.BooleanField(default=True)
     ws_server_on = models.BooleanField(default=True)
-    twilio_key = models.CharField(
-        max_length=30,
-        blank=True,
-        null=True
-    )
-    twilio_account_sid = models.CharField(
-        max_length=50,
-        blank=True,
-        null=True
-    )
-    twilio_auth_token = models.CharField(
-        max_length=50,
-        blank=True,
-        null=True
-    )
-    twilio_phone = models.CharField(
-        max_length=50,
-        blank=True,
-        null=True
-    )
-    email_host = models.CharField(
-        max_length=50,
-        blank=True,
-        null=True
-    )
-    email_host_user = models.CharField(
-        max_length=50,
-        blank=True,
-        null=True
-    )
-    from_email = models.EmailField(
-        blank=True,
-        null=True
-    )
-    payment_public_key = models.CharField(
-        max_length=50,
-        blank=True,
-        null=True
-    )
+    twilio_account_sid = models.CharField(max_length=50, blank=True, null=True)
+    twilio_auth_token = models.CharField(max_length=50, blank=True, null=True)
+    twilio_phone = models.CharField(max_length=50, blank=True, null=True)
+    email_host = models.CharField(max_length=50, blank=True, null=True)
+    email_host_user = models.CharField(max_length=50, blank=True, null=True)
+    email_host_password = models.CharField(
+        max_length=100, blank=True, null=True)
+    from_email = models.EmailField(blank=True, null=True)
+    payment_public_key = models.CharField(max_length=50, blank=True, null=True)
     payment_private_key = models.CharField(
-        max_length=50,
-        blank=True,
-        null=True
-    )
-    payment_link_url = models.URLField(
-        blank=True,
-        null=True
-    )
-    frontend_url = models.URLField(
-        blank=True,
-        null=True
-    )
-    backend_url = models.URLField(
-        blank=True,
-        null=True
-    )
+        max_length=50, blank=True, null=True)
+    payment_link_url = models.URLField(blank=True, null=True)
+    frontend_url = models.URLField(blank=True, null=True)
+    backend_url = models.URLField(blank=True, null=True)
     test_mode = models.BooleanField(default=True)
 
 
@@ -92,6 +50,7 @@ class Setup(LifecycleModel):
             'twilio_phone': self.twilio_phone,
             'email_host': self.email_host,
             'email_host_user': self.email_host_user,
+            'email_host_password': self.email_host_password,
             'from_email': self.from_email
         })
 
@@ -105,22 +64,18 @@ class Setup(LifecycleModel):
 
 
 class Sms(models.Model):
-    created_at = models.DateTimeField(
-        auto_now_add=True
-    )
+    created_at = models.DateTimeField(auto_now_add=True)
     phone = models.CharField(max_length=15)
     sms = models.TextField()
     success = models.BooleanField(null=True)
-    source = models.CharField(
-        max_length=20
-    )
+    source = models.CharField(max_length=20)
     data = models.JSONField()
 
     class Meta:
         verbose_name = 'Sms'
         verbose_name_plural = 'Sms'
 
-    def set_status(self, status, data):
-        self.success = status
+    def update(self, data):
+        self.success = data['status'] in ['queued', 'sent']
         self.data = data
         self.save(update_fields=['success', 'data'])

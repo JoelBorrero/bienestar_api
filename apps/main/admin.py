@@ -5,14 +5,13 @@ from .models import Setup
 
 @admin.register(Setup)
 class SetupAdmin(admin.ModelAdmin):
-    list_display = [
+    list_display = (
         'id',
         'allow_register',
         'disable_user_when_register',
         'http_server_on',
-        'ws_server_on',
-        'twilio_key'
-    ]
+        'ws_server_on'
+    )
 
     def has_add_permission(self, request):
         return Setup.objects.count() == 0
