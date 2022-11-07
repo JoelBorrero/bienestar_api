@@ -9,12 +9,13 @@ from apps.utils.permissions import IsAccount, IsPromoter, IsSupervisor
 
 
 def create_report(serializer_class, request):
+    request.data['was_supervised'] = True
     serializer = serializer_class(data=request.data, context={'user': request.user})
     data = dict()
     if serializer.is_valid(raise_exception=True):
         record, created = serializer.save()
-        # data = serializer.create(record).data
-    return serializer.is_valid(), created
+        data = serializer_class(record).data
+    return data, created
 
 
 class PromoterViewSet(viewsets.GenericViewSet):
@@ -32,7 +33,7 @@ class PromoterViewSet(viewsets.GenericViewSet):
     @action(detail=False, methods=['POST'])
     def report(self, request):
         """Promoter reports his worked hour."""
-        data, created = create_report(self.serializer_class, request)
+        data, created = create_report(PromoterRecordSerializer, request)
         return Response({'data': data, 'created': created})
 
 
@@ -51,7 +52,7 @@ class SupervisorViewSet(viewsets.GenericViewSet):
     @action(detail=False, methods=['POST'])
     def report(self, request):
         """Promoter reports his worked hour."""
-        data, created = create_report(self.serializer_class, request)
+        data, created = create_report(SupervisorRecordSerializer, request)
         return Response({'data': data, 'created': created})
 
 
