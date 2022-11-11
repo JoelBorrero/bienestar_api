@@ -166,7 +166,7 @@ docker-compose exec backend python3 manage.py createsuperuser
 ./run_create_user.sh
 ```
 
-## collect statics
+## Collect statics
 
 this command just **works** in **local** doesn't work in production
 ```bash

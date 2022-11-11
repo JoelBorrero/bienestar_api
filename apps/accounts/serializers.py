@@ -105,6 +105,13 @@ class AccountRegisterSerializer(AccountSerializer):
             }
         }
 
+    def validate(self, attrs):
+        if Account.objects.filter(username=attrs.get('email')):
+            raise serializers.ValidationError({
+                'error': 'Ya existe una cuenta con este correo'
+            })
+        return attrs
+
     def create(self, validated_data):
         validated_data['username'] = validated_data['email']
         instance = super().create(validated_data)
