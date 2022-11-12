@@ -1,5 +1,9 @@
 from datetime import datetime
 import pandas as pd
+import nltk
+from nltk import wordpunct_tokenize
+from nltk.corpus import stopwords
+from nltk.stem import SnowballStemmer
 
 from apps.utils.choices import GROUP
 from apps.utils.constants import ACTIVITY_CATEGORIES, ACTIVITY_STATUSES
@@ -86,3 +90,29 @@ def read_from_excel(excel):
         res['created' if created else 'updated'].append(
             f'{activity.ext_id} ({activity.pk})')
     return res
+
+def common_words_activities():
+    activities = Activity.objects.all()
+    text = ""
+    for activity in activities:
+        text += " " + activity.name + " " + activity.description
+
+    tokens_lower = [word.lower() for word in wordpunct_tokenize(text)]
+    print("Before removing stopwords", len(tokens_lower))
+    stopw = stopwords.words('spanish')
+    punctuation = [u'.', u'[', ']', u',', u';', u'', u')', u'),', u' ', u'(', u'?', u'¿', u'-', u':', u'"', u'/']
+    stopw.extend(punctuation)
+    words = [token
+            for token in tokens_lower if token not in stopw]
+    print("After removing stopwords", len(words))
+
+    snowball_stemmer = SnowballStemmer('spanish')
+    stemmers = [snowball_stemmer.stem(word) for word in words]
+    final = [stem for stem in stemmers if stem.isalpha() and len(stem) > 1]
+    print("After stemming", len(final))
+    fdist_stemming = nltk.FreqDist(final)
+    print("With stemming", fdist_stemming.most_common(30))
+
+    print()
+    fdist = nltk.FreqDist(words)
+    print("Without stemming", fdist.most_common(30))
