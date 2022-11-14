@@ -25,12 +25,12 @@ def get_categories_coverage(start_date, end_date):
         keys[activity.category]["previous"] += 1
     for category in keys.items():
         current_coverage = round(
-            category[1]["current"] / current_activities_count * 100, 2
+            category[1]["current"] / (current_activities_count or 1) * 100, 2
         )
         current_results = category[1]["current"]
-        previous_results = category[1]["previous"] or 1
+        previous_results = category[1]["previous"]
         variation = round(
-            (current_results - previous_results) / previous_results * 100, 2
+            (current_results - previous_results) / (previous_results or 1) * 100, 2
         )
         result.append(
             {

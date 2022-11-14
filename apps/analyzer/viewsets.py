@@ -17,8 +17,7 @@ from apps.utils.serializers import EmptySerializer
 
 def create_report(serializer_class, request):
     request.data["was_supervised"] = True
-    serializer = serializer_class(
-        data=request.data, context={"user": request.user})
+    serializer = serializer_class(data=request.data, context={"user": request.user})
     data = dict()
     if serializer.is_valid(raise_exception=True):
         record, created = serializer.save()

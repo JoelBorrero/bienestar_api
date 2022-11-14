@@ -104,12 +104,17 @@ def read_from_excel(excel):
 
 @shared_task
 def load_statistics(start_date=None, end_date=None):
+    if type(start_date) is str:
+        start_date = datetime.strptime(f"{start_date} 23:59", "%Y-%m-%d %H:%M").replace(
+            tzinfo=TIMEZONE
+        )
+    if type(end_date) is str:
+        end_date = datetime.strptime(f"{end_date} 23:59", "%Y-%m-%d %H:%M").replace(
+            tzinfo=TIMEZONE
+        )
     if not end_date:
         end_date = datetime.now(TIMEZONE)
     if not start_date:
-        if type(end_date) is str:
-            end_date = datetime.strptime(f"{end_date} 23:59", "%Y-%m-%d %H:%M")
-            end_date = end_date.replace(tzinfo=TIMEZONE)
         start_date = end_date - timedelta(days=30, hours=23, minutes=59)
     coverage_result = get_categories_coverage(start_date, end_date)
     result = {
