@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     "apps.accounts",
     "apps.analyzer",
     "apps.main",
+    "apps.promoter",
     "apps.utils",
 ]
 
