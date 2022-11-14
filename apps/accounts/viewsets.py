@@ -1,5 +1,5 @@
 from django.contrib.auth import authenticate, logout
-from rest_framework import mixins, viewsets
+from rest_framework import viewsets
 from rest_framework.authtoken.models import Token
 from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
@@ -14,7 +14,6 @@ from .serializers import (
     GroupSerializer,
     SendResetCodeSerializer,
     UserLoginSerializer,
-    UserResetPasswordCodeSerializer,
     UserResetPasswordSetPasswordSerializer,
     get_token,
 )

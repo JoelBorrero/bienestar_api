@@ -1,5 +1,3 @@
-from datetime import datetime
-
 from apps.accounts.models import Activity
 from apps.utils.constants import ACTIVITY_CATEGORIES
 
