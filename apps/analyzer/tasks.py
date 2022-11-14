@@ -105,14 +105,20 @@ def read_from_excel(excel):
         )
     return res
 
+
 @shared_task
 def load_statistics(start_date=None, end_date=None):
+    if type(start_date) is str:
+        start_date = datetime.strptime(f"{start_date} 23:59", "%Y-%m-%d %H:%M").replace(
+            tzinfo=TIMEZONE
+        )
+    if type(end_date) is str:
+        end_date = datetime.strptime(f"{end_date} 23:59", "%Y-%m-%d %H:%M").replace(
+            tzinfo=TIMEZONE
+        )
     if not end_date:
         end_date = datetime.now(TIMEZONE)
     if not start_date:
-        if type(end_date) is str:
-            end_date = datetime.strptime(f"{end_date} 23:59", "%Y-%m-%d %H:%M")
-            end_date = end_date.replace(tzinfo=TIMEZONE)
         start_date = end_date - timedelta(days=30, hours=23, minutes=59)
     coverage_result = get_categories_coverage(start_date, end_date)
     result = {
@@ -123,9 +129,10 @@ def load_statistics(start_date=None, end_date=None):
     }
     return result
 
+
 def common_words_activities_months():
     dates = []
-    for activity in Activity.objects.order_by('start_date'):
+    for activity in Activity.objects.order_by("start_date"):
         month = activity.start_date.month
         year = activity.start_date.year
         date = {"month": month, "year": year}
@@ -133,25 +140,45 @@ def common_words_activities_months():
             dates.append(date)
 
     for date in dates:
-        activities = Activity.objects.filter(start_date__year=date['year'], start_date__month=date['month'])
+        activities = Activity.objects.filter(
+            start_date__year=date["year"], start_date__month=date["month"]
+        )
         fdist = common_words_activities(activities)
         date["fdist"] = fdist
 
     return dates
 
-def common_words_activities(activities):
+
+def common_words_activities():
+    activities = Activity.objects.all()
     text = ""
     for activity in activities:
         text += " " + activity.name + " " + activity.description
 
     tokens_lower = [word.lower() for word in wordpunct_tokenize(text)]
-    stopw = stopwords.words('spanish')
-    punctuation = [u'.', u'[', ']', u',', u';', u'', u')', u'),', u' ', u'(', u'?', u'¿', u'-', u':', u'"', u'/']
+    stopw = stopwords.words("spanish")
+    punctuation = [
+        ".",
+        "[",
+        "]",
+        ",",
+        ";",
+        "",
+        ")",
+        "),",
+        " ",
+        "(",
+        "?",
+        "¿",
+        "-",
+        ":",
+        '"',
+        "/",
+    ]
     stopw.extend(punctuation)
-    words = [token
-            for token in tokens_lower if token not in stopw]
+    words = [token for token in tokens_lower if token not in stopw]
 
-    snowball_stemmer = SnowballStemmer('spanish')
+    snowball_stemmer = SnowballStemmer("spanish")
     stemmers = [snowball_stemmer.stem(word) for word in words]
     final = [stem for stem in stemmers if stem.isalpha() and len(stem) > 1]
     fdist_stemming = nltk.FreqDist(final)

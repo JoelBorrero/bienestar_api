@@ -17,8 +17,7 @@ from apps.utils.serializers import EmptySerializer
 
 def create_report(serializer_class, request):
     request.data["was_supervised"] = True
-    serializer = serializer_class(
-        data=request.data, context={"user": request.user})
+    serializer = serializer_class(data=request.data, context={"user": request.user})
     data = dict()
     if serializer.is_valid(raise_exception=True):
         record, created = serializer.save()
@@ -62,7 +61,7 @@ class StatisticsViewSet(viewsets.GenericViewSet):
         return Response(data)
 
     @action(detail=False, methods=["GET"])
-    def coverage(self, _):
+    def common_words(self, _):
         """Returns most common words in activities by month."""
         data = common_words_activities_months()
         return Response(data)

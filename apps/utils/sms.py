@@ -1,11 +1,9 @@
 import time
 
-from django.conf import settings
 from twilio.rest import Client
 
 from apps.main.models import Sms
 from apps.utils.redis import client as redis
-from apps.utils.shortcuts import get_object_or_none
 
 
 def send_sms(phone: str, sms: str):
