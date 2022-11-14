@@ -17,7 +17,9 @@ repos:
     hooks:
     - id: flake8
       exclude: project
-      ignore: E501
+      args:
+        - --ignore=E501
+        - --per-file-ignores=apps/utils/shortcuts.py:E722
   - repo: https://github.com/pycqa/isort
     rev: 5.6.4
     hooks:
