@@ -125,3 +125,4 @@ pydantic
 static
 static3
 uWSGI
+nltk==3.7
