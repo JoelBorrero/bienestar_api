@@ -16,7 +16,7 @@ class RedisClient:
 
     def get_json(self, key: str):
         bytes_data = self.get(key=key)
-        json_data = bytes_data.decode('utf8').replace("'", '"')
+        json_data = bytes_data.decode("utf8").replace("'", '"')
         return json.loads(json_data)
 
 

@@ -10,7 +10,7 @@ from rest_framework import permissions
 schema_view = get_schema_view(
     openapi.Info(
         title="Backend Api V1",
-        default_version='v1',
+        default_version="v1",
         description="Bienestar Uninorte",
         # contact=openapi.Contact(email="ioswxd@gmail.com"),
         license=openapi.License(name="BSD License"),
@@ -20,15 +20,17 @@ schema_view = get_schema_view(
 )
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('', schema_view.with_ui('swagger', cache_timeout=None), name='schema-swagger-ui'),
-    path('accounts/', include('apps.accounts.urls')),
-    path('analyzer/', include('apps.analyzer.urls')),
+    path("admin/", admin.site.urls),
+    path(
+        "", schema_view.with_ui("swagger", cache_timeout=None), name="schema-swagger-ui"
+    ),
+    path("accounts/", include("apps.accounts.urls")),
+    path("analyzer/", include("apps.analyzer.urls")),
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
-handler400 = 'apps.utils.errors.error_400'
-handler403 = 'apps.utils.errors.error_403'
-handler404 = 'apps.utils.errors.error_404'
-handler500 = 'apps.utils.errors.error_500'
+handler400 = "apps.utils.errors.error_400"
+handler403 = "apps.utils.errors.error_403"
+handler404 = "apps.utils.errors.error_404"
+handler500 = "apps.utils.errors.error_500"

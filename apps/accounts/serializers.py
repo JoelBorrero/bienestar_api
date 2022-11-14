@@ -17,21 +17,15 @@ def get_token(user):
 
 class SendResetCodeSerializer(serializers.Serializer):
     email = serializers.EmailField()
-    sending_method = serializers.CharField(max_length=5, default='sms', help_text='sms or email')
+    sending_method = serializers.CharField(
+        max_length=5, default="sms", help_text="sms or email"
+    )
 
     def validate(self, data):
-        if Account.objects.filter(username=data.get('email')):
+        if Account.objects.filter(username=data.get("email")):
             raise EmailValidationError()
         return data
 
-    def create(self, validated_data):
-        pass
-
-    def update(self, instance, validated_data):
-        pass
-
-
-class EmptySerializer(serializers.Serializer):
     def create(self, validated_data):
         pass
 
@@ -56,20 +50,20 @@ class UserLoginSerializer(serializers.Serializer):
         pass
 
     def validate(self, data):
-        user = authenticate(username=data.get('email'), password=data.get('password'))
+        user = authenticate(username=data.get("email"), password=data.get("password"))
         if not user:
-            raise serializers.ValidationError({
-                'error': 'Las credenciales no son válidas'
-            })
-        if not hasattr(user, 'account'):
-            raise serializers.ValidationError({
-                'error': 'No tiene permisos para entrar aquí'
-            })
-        self.context['user'] = user
+            raise serializers.ValidationError(
+                {"error": "Las credenciales no son válidas"}
+            )
+        if not hasattr(user, "account"):
+            raise serializers.ValidationError(
+                {"error": "No tiene permisos para entrar aquí"}
+            )
+        self.context["user"] = user
         return data
 
     def create(self, data):
-        user = self.context['user']
+        user = self.context["user"]
         token = get_token(user)
         user = AccountSerializer(user.account)
         return user.data, token.key
@@ -78,42 +72,28 @@ class UserLoginSerializer(serializers.Serializer):
 class AccountSerializer(serializers.ModelSerializer):
     class Meta:
         model = Account
-        fields = (
-            'email',
-            'first_name',
-            'last_name',
-            'role',
-            'is_active'
-        )
+        fields = ("email", "first_name", "last_name", "role", "is_active")
 
 
 class AccountRegisterSerializer(AccountSerializer):
     class Meta(AccountSerializer.Meta):
-        fields = AccountSerializer.Meta.fields + ('raw_password',)
+        fields = AccountSerializer.Meta.fields + ("raw_password",)
         extra_kwargs = {
-            'raw_password': {
-                'write_only': True
-            },
-            'role': {
-                'read_only': True
-            },
-            'code': {
-                'read_only': True
-            },
-            'is_active': {
-                'read_only': True
-            }
+            "raw_password": {"write_only": True},
+            "role": {"read_only": True},
+            "code": {"read_only": True},
+            "is_active": {"read_only": True},
         }
 
     def validate(self, attrs):
-        if Account.objects.filter(username=attrs.get('email')):
-            raise serializers.ValidationError({
-                'error': 'Ya existe una cuenta con este correo'
-            })
+        if Account.objects.filter(username=attrs.get("email")):
+            raise serializers.ValidationError(
+                {"error": "Ya existe una cuenta con este correo"}
+            )
         return attrs
 
     def create(self, validated_data):
-        validated_data['username'] = validated_data['email']
+        validated_data["username"] = validated_data["email"]
         instance = super().create(validated_data)
         return instance
 
@@ -122,11 +102,11 @@ class ActivitySerializer(serializers.ModelSerializer):
     class Meta:
         model = Activity
         fields = (
-            'pk',
-            'ext_id',
-            'name',
-            'description',
-            'group',
+            "pk",
+            "ext_id",
+            "name",
+            "description",
+            "group",
         )
         depth = 1
 
@@ -134,9 +114,4 @@ class ActivitySerializer(serializers.ModelSerializer):
 class GroupSerializer(serializers.ModelSerializer):
     class Meta:
         model = Group
-        fields = (
-            'name',
-            'description',
-            'email',
-            'is_active'
-        )
+        fields = ("name", "description", "email", "is_active")

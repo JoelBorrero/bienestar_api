@@ -8,12 +8,12 @@ from apps.utils.redis import client as redis
 from apps.utils.shortcuts import get_object_or_none
 
 
-def send_sms(phone:str, sms:str):
-    setup = redis.get_json('setup')
+def send_sms(phone: str, sms: str):
+    setup = redis.get_json("setup")
 
-    account_sid = setup.get('twilio_account_sid')
-    auth_token = setup.get('twilio_auth_token')
-    from_phone = setup.get('twilio_phone')
+    account_sid = setup.get("twilio_account_sid")
+    auth_token = setup.get("twilio_auth_token")
+    from_phone = setup.get("twilio_phone")
     client = Client(account_sid, auth_token)
 
     time.sleep(2)
@@ -37,7 +37,7 @@ def send_sms(phone:str, sms:str):
         "sid": message.sid,
         "status": message.status,
         "to": message.to,
-        "uri": message.uri
+        "uri": message.uri,
     }
     Sms.objects.create(phone=phone, sms=sms, source=from_phone, data=data)
     return data

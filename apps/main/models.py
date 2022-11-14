@@ -16,51 +16,50 @@ class Setup(LifecycleModel):
     twilio_phone = models.CharField(max_length=50, blank=True, null=True)
     email_host = models.CharField(max_length=50, blank=True, null=True)
     email_host_user = models.CharField(max_length=50, blank=True, null=True)
-    email_host_password = models.CharField(
-        max_length=100, blank=True, null=True)
+    email_host_password = models.CharField(max_length=100, blank=True, null=True)
     from_email = models.EmailField(blank=True, null=True)
     payment_public_key = models.CharField(max_length=50, blank=True, null=True)
-    payment_private_key = models.CharField(
-        max_length=50, blank=True, null=True)
+    payment_private_key = models.CharField(max_length=50, blank=True, null=True)
     payment_link_url = models.URLField(blank=True, null=True)
     frontend_url = models.URLField(blank=True, null=True)
     backend_url = models.URLField(blank=True, null=True)
     test_mode = models.BooleanField(default=True)
 
-
     class Meta:
-        verbose_name = 'Setup'
-        verbose_name_plural = 'Setup'
+        verbose_name = "Setup"
+        verbose_name_plural = "Setup"
 
     def __str__(self):
-        return 'Project Setup'
+        return "Project Setup"
 
     def save(self, *args, **kwargs):
         if self.__class__.objects.all().count() <= 1:
             super().save(*args, **kwargs)
 
     def get_data(self):
-        return json.dumps({
-            'allow_register': self.allow_register,
-            'disable_user_when_register': self.disable_user_when_register,
-            'payment_private_key': self.payment_private_key,
-            'test_mode': self.test_mode,
-            'twilio_account_sid': self.twilio_account_sid,
-            'twilio_auth_token': self.twilio_auth_token,
-            'twilio_phone': self.twilio_phone,
-            'email_host': self.email_host,
-            'email_host_user': self.email_host_user,
-            'email_host_password': self.email_host_password,
-            'from_email': self.from_email
-        })
+        return json.dumps(
+            {
+                "allow_register": self.allow_register,
+                "disable_user_when_register": self.disable_user_when_register,
+                "payment_private_key": self.payment_private_key,
+                "test_mode": self.test_mode,
+                "twilio_account_sid": self.twilio_account_sid,
+                "twilio_auth_token": self.twilio_auth_token,
+                "twilio_phone": self.twilio_phone,
+                "email_host": self.email_host,
+                "email_host_user": self.email_host_user,
+                "email_host_password": self.email_host_password,
+                "from_email": self.from_email,
+            }
+        )
 
     @hook(AFTER_CREATE)
     def on_create(self):
-        redis.set('setup', self.get_data())
+        redis.set("setup", self.get_data())
 
     @hook(BEFORE_UPDATE)
     def on_update(self):
-        redis.set('setup', self.get_data())
+        redis.set("setup", self.get_data())
 
 
 class Sms(models.Model):
@@ -72,10 +71,10 @@ class Sms(models.Model):
     data = models.JSONField()
 
     class Meta:
-        verbose_name = 'Sms'
-        verbose_name_plural = 'Sms'
+        verbose_name = "Sms"
+        verbose_name_plural = "Sms"
 
     def update(self, data):
-        self.success = data['status'] in ['queued', 'sent']
+        self.success = data["status"] in ["queued", "sent"]
         self.data = data
-        self.save(update_fields=['success', 'data'])
+        self.save(update_fields=["success", "data"])

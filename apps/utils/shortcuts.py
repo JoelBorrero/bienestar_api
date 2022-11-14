@@ -23,8 +23,8 @@ def raise_parse_error(key=None, value=None):
 
 
 def raise_error(message):
-    raise ParseError({'message': message})
+    raise ParseError({"message": message})
 
 
 def raise_permission_error(message):
-    raise PermissionDenied({'message': message})
+    raise PermissionDenied({"message": message})
