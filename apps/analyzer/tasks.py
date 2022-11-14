@@ -105,6 +105,7 @@ def read_from_excel(excel):
         )
     return res
 
+
 @shared_task
 def load_statistics(start_date=None, end_date=None):
     if type(start_date) is str:
@@ -128,6 +129,7 @@ def load_statistics(start_date=None, end_date=None):
     }
     return result
 
+
 def common_words_activities():
     activities = Activity.objects.all()
     text = ""
@@ -136,14 +138,30 @@ def common_words_activities():
 
     tokens_lower = [word.lower() for word in wordpunct_tokenize(text)]
     print("Before removing stopwords", len(tokens_lower))
-    stopw = stopwords.words('spanish')
-    punctuation = [u'.', u'[', ']', u',', u';', u'', u')', u'),', u' ', u'(', u'?', u'¿', u'-', u':', u'"', u'/']
+    stopw = stopwords.words("spanish")
+    punctuation = [
+        ".",
+        "[",
+        "]",
+        ",",
+        ";",
+        "",
+        ")",
+        "),",
+        " ",
+        "(",
+        "?",
+        "¿",
+        "-",
+        ":",
+        '"',
+        "/",
+    ]
     stopw.extend(punctuation)
-    words = [token
-            for token in tokens_lower if token not in stopw]
+    words = [token for token in tokens_lower if token not in stopw]
     print("After removing stopwords", len(words))
 
-    snowball_stemmer = SnowballStemmer('spanish')
+    snowball_stemmer = SnowballStemmer("spanish")
     stemmers = [snowball_stemmer.stem(word) for word in words]
     final = [stem for stem in stemmers if stem.isalpha() and len(stem) > 1]
     print("After stemming", len(final))
