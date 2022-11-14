@@ -1,7 +1,11 @@
 from datetime import datetime, timedelta
 
+import nltk
 import pandas as pd
 from celery import shared_task
+from nltk import wordpunct_tokenize
+from nltk.corpus import stopwords
+from nltk.stem import SnowballStemmer
 
 from .services import get_categories_coverage
 from apps.utils.choices import GROUP
@@ -101,7 +105,6 @@ def read_from_excel(excel):
         )
     return res
 
-
 @shared_task
 def load_statistics(start_date=None, end_date=None):
     if not end_date:
@@ -119,3 +122,29 @@ def load_statistics(start_date=None, end_date=None):
         "coverage": coverage_result["data"],
     }
     return result
+
+def common_words_activities():
+    activities = Activity.objects.all()
+    text = ""
+    for activity in activities:
+        text += " " + activity.name + " " + activity.description
+
+    tokens_lower = [word.lower() for word in wordpunct_tokenize(text)]
+    print("Before removing stopwords", len(tokens_lower))
+    stopw = stopwords.words('spanish')
+    punctuation = [u'.', u'[', ']', u',', u';', u'', u')', u'),', u' ', u'(', u'?', u'¿', u'-', u':', u'"', u'/']
+    stopw.extend(punctuation)
+    words = [token
+            for token in tokens_lower if token not in stopw]
+    print("After removing stopwords", len(words))
+
+    snowball_stemmer = SnowballStemmer('spanish')
+    stemmers = [snowball_stemmer.stem(word) for word in words]
+    final = [stem for stem in stemmers if stem.isalpha() and len(stem) > 1]
+    print("After stemming", len(final))
+    fdist_stemming = nltk.FreqDist(final)
+    print("With stemming", fdist_stemming.most_common(30))
+
+    print()
+    fdist = nltk.FreqDist(words)
+    print("Without stemming", fdist.most_common(30))

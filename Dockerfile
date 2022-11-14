@@ -32,6 +32,7 @@ RUN export LC_ALL=es_ES.UTF-8
 
 RUN adduser --disabled-password --gecos '' app
 RUN chown -R app:app /app && chmod -R 755 /app
+RUN python3 -m nltk.downloader -d /home/app/nltk_data popular
 
 ENV HOME /home/app
 USER app
