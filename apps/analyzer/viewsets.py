@@ -10,7 +10,7 @@ from .serializers import (
     SupervisorRecordSerializer,
     UploadedReportSerializer,
 )
-from .tasks import load_statistics
+from .tasks import load_statistics, common_words_activities_months
 from apps.utils.permissions import IsAccount, IsPromoter, IsSupervisor
 from apps.utils.serializers import EmptySerializer
 
@@ -58,6 +58,12 @@ class StatisticsViewSet(viewsets.GenericViewSet):
         start_date = data.get("start_date")
         end_date = data.get("end_date")
         data = load_statistics(start_date, end_date)
+        return Response(data)
+
+    @action(detail=False, methods=["GET"])
+    def common_words(self, _):
+        """Returns most common words in activities by month."""
+        data = common_words_activities_months()
         return Response(data)
 
 

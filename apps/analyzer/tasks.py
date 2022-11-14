@@ -130,6 +130,25 @@ def load_statistics(start_date=None, end_date=None):
     return result
 
 
+def common_words_activities_months():
+    dates = []
+    for activity in Activity.objects.order_by("start_date"):
+        month = activity.start_date.month
+        year = activity.start_date.year
+        date = {"month": month, "year": year}
+        if date not in dates:
+            dates.append(date)
+
+    for date in dates:
+        activities = Activity.objects.filter(
+            start_date__year=date["year"], start_date__month=date["month"]
+        )
+        fdist = common_words_activities(activities)
+        date["fdist"] = fdist
+
+    return dates
+
+
 def common_words_activities():
     activities = Activity.objects.all()
     text = ""
@@ -137,7 +156,6 @@ def common_words_activities():
         text += " " + activity.name + " " + activity.description
 
     tokens_lower = [word.lower() for word in wordpunct_tokenize(text)]
-    print("Before removing stopwords", len(tokens_lower))
     stopw = stopwords.words("spanish")
     punctuation = [
         ".",
@@ -159,15 +177,11 @@ def common_words_activities():
     ]
     stopw.extend(punctuation)
     words = [token for token in tokens_lower if token not in stopw]
-    print("After removing stopwords", len(words))
 
     snowball_stemmer = SnowballStemmer("spanish")
     stemmers = [snowball_stemmer.stem(word) for word in words]
     final = [stem for stem in stemmers if stem.isalpha() and len(stem) > 1]
-    print("After stemming", len(final))
     fdist_stemming = nltk.FreqDist(final)
-    print("With stemming", fdist_stemming.most_common(30))
 
-    print()
-    fdist = nltk.FreqDist(words)
-    print("Without stemming", fdist.most_common(30))
+    # fdist = nltk.FreqDist(words) # Frequency of words without stemming
+    return fdist_stemming
