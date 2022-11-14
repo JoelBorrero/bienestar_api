@@ -123,15 +123,8 @@ def load_statistics(start_date=None, end_date=None):
     }
     return result
 
-def common_words_activities_months(start_date=None, end_date=None):
+def common_words_activities_months():
     dates = []
-    if not end_date:
-        end_date = datetime.now(TIMEZONE)
-    if not start_date:
-        if type(end_date) is str:
-            end_date = datetime.strptime(f"{end_date} 23:59", "%Y-%m-%d %H:%M")
-            end_date = end_date.replace(tzinfo=TIMEZONE)
-        start_date = end_date - timedelta(days=30, hours=23, minutes=59)
     for activity in Activity.objects.order_by('start_date'):
         month = activity.start_date.month
         year = activity.start_date.year
