@@ -5,11 +5,8 @@ from . import viewsets
 
 
 router = routers.DefaultRouter()
-router.register(r'users', viewsets.AccountAuthViewSet)
-router.register(r'auth', viewsets.AccountRegisterViewSet)
-router.register(r'activity', viewsets.ActivityViewSet)
-router.register(r'group', viewsets.GroupViewSet)
+router.register(r"auth", viewsets.AccountAuthViewSet)
+router.register(r"activity", viewsets.ActivityViewSet)
+router.register(r"group", viewsets.GroupViewSet)
 
-urlpatterns = [
-    path('', include(router.urls))
-]
+urlpatterns = [path("", include(router.urls))]
