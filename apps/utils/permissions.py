@@ -11,7 +11,7 @@ class IsAccount(BasePermission):
     """
 
     def has_permission(self, request, view):
-        return hasattr(request.user, 'account')
+        return hasattr(request.user, "account")
 
 
 class IsPromoter(BasePermission):
@@ -29,7 +29,7 @@ class IsRegisterEnabled(BasePermission):
     """
 
     def has_permission(self, request, view):
-        if not redis.get_json('setup').get('allow_register'):
+        if not redis.get_json("setup").get("allow_register"):
             raise RegisterDisabledValidationError()
         return True
 

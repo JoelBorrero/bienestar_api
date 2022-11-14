@@ -1,7 +1,7 @@
-ADMIN = 'administrador'
-GROUP = 'grupo'
-PROMOTER = 'promotor'
-SUPERVISOR = 'supervisor'
+ADMIN = "administrador"
+GROUP = "grupo"
+PROMOTER = "promotor"
+SUPERVISOR = "supervisor"
 
 ROLES = (
     (ADMIN, ADMIN.title()),

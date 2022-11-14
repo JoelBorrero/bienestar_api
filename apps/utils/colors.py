@@ -20,4 +20,3 @@ def purple(msj):
 
 def _cyan(msj):
     return "\033[0;36m{0}\033[0m".format(msj)
-
