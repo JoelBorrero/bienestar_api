@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import Record
+from .models import Record, Zone
 from apps.utils.exceptions import (
     DateValidationError,
     PeopleValidationError,
@@ -85,3 +85,10 @@ class SupervisorRecordSerializer(serializers.ModelSerializer):
             "people_called",
         )
         extra_kwargs = {"supervisor_wake_up_calls": {"required": True}}
+
+
+class ZoneSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Zone
+        fields = ("id", "name")
+        # extra_kwargs = {"id": {"read_only": True}}

@@ -56,7 +56,6 @@ def read_from_excel(excel):
     data = pd.read_excel(excel, engine="openpyxl")
     res = {"created": [], "updated": []}
     for i in range(len(data)):
-        # for i in range(2):
         row = data.iloc[i]
         row = row.dropna()
         event = {}
@@ -76,6 +75,8 @@ def read_from_excel(excel):
         )
         if created:
             res["created"].append(f"{group.name} ({group.pk})")
+            group.set_password("uninorte")
+            group.save()
         event["group"] = group
         for key in ["start_date", "end_date"]:
             if type(event[key]) is not datetime:

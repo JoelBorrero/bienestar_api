@@ -51,7 +51,9 @@ class Activity(BaseModel):
     )
     event_url = models.CharField("URL del evento", max_length=1804, blank=True)
     comments = models.TextField("Comentarios")
-    status = models.CharField("Estado", max_length=1, choices=ACTIVITY_STATUSES)
+    status = models.CharField(
+        "Estado", max_length=1, choices=ACTIVITY_STATUSES, default="p"
+    )
     send_email = models.BooleanField("Enviar email", default=False)
     notes = models.JSONField("Notas")
 
