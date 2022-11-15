@@ -99,16 +99,24 @@ class AccountRegisterSerializer(AccountSerializer):
 
 
 class ActivitySerializer(serializers.ModelSerializer):
+    status = serializers.SerializerMethodField(read_only=False)
+
+    def save(self, **kwargs):
+        group = Group.objects.get(account_ptr=self.context["request"].user.account)
+        self.validated_data["group"] = group
+        self.validated_data["notes"][group.name] = self.validated_data["notes"].pop(
+            "text"
+        )
+        return super().save(**kwargs)
+
+    @staticmethod
+    def get_status(obj):
+        return obj.get_status_display()
+
     class Meta:
         model = Activity
-        fields = (
-            "pk",
-            "ext_id",
-            "name",
-            "description",
-            "group",
-        )
-        depth = 1
+        exclude = ("email", "created_at", "updated_at", "deleted")
+        extra_kwargs = {"group": {"read_only": True}}
 
 
 class GroupSerializer(serializers.ModelSerializer):

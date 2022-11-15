@@ -1,5 +1,5 @@
 from django.contrib.auth import authenticate, logout
-from rest_framework import viewsets
+from rest_framework import mixins, viewsets
 from rest_framework.authtoken.models import Token
 from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
@@ -17,6 +17,7 @@ from .serializers import (
     UserResetPasswordSetPasswordSerializer,
     get_token,
 )
+from apps.utils.constants import ACTIVITY_CATEGORIES, ACTIVITY_STATUSES
 from apps.utils.email import send_email
 from apps.utils.serializers import EmptySerializer
 from apps.utils.sms import send_sms
@@ -118,11 +119,6 @@ class AccountAuthViewSet(viewsets.GenericViewSet):
             success = False
         return Response({"success": success})
 
-    @action(detail=False, methods=["GET"])
-    def detail_user(self, request):
-        serializer = self.serializer_class(request.user.account)
-        return Response(serializer.data)
-
     @action(detail=False, methods=["PUT"])
     def update_user(self, request):
         serializer = self.serializer_class(request.user.account, request.data)
@@ -131,11 +127,26 @@ class AccountAuthViewSet(viewsets.GenericViewSet):
         return Response(serializer.data)
 
 
-class ActivityViewSet(viewsets.ModelViewSet):
+class ActivityViewSet(viewsets.GenericViewSet, mixins.CreateModelMixin):
     serializer_class = ActivitySerializer
     queryset = Activity.objects.filter(deleted=False)
+    permission_classes = [IsAuthenticated]
+
+    def list(self, request):
+        queryset = self.queryset.filter(group=request.user.account)
+        serializer = self.serializer_class(queryset, many=True)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=["GET"])
+    def constants(self, request):
+        return Response(
+            {
+                "categories": ACTIVITY_CATEGORIES,
+                "statuses": ACTIVITY_STATUSES,
+            }
+        )
 
 
-class GroupViewSet(viewsets.ModelViewSet):
+class GroupViewSet(viewsets.GenericViewSet):
     serializer_class = GroupSerializer
     queryset = Group.objects.filter(deleted=False)
