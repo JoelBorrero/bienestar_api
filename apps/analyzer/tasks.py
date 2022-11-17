@@ -107,8 +107,7 @@ def read_from_excel(excel):
     return res
 
 
-@shared_task
-def load_statistics(start_date=None, end_date=None):
+def get_dates_range(start_date, end_date):
     if type(start_date) is str:
         start_date = datetime.strptime(f"{start_date} 23:59", "%Y-%m-%d %H:%M").replace(
             tzinfo=TIMEZONE
@@ -121,29 +120,18 @@ def load_statistics(start_date=None, end_date=None):
         end_date = datetime.now(TIMEZONE)
     if not start_date:
         start_date = end_date - timedelta(days=180, hours=23, minutes=59)
-    coverage_result = get_categories_coverage(start_date, end_date)
-    result = {
-        "start_date": start_date,
-        "end_date": end_date,
-        "total": coverage_result["total"],
-        "coverage": coverage_result["data"],
-    }
+    return start_date, end_date
+
+
+@shared_task
+def load_statistics(start_date=None, end_date=None):
+    start_date, end_date = get_dates_range(start_date, end_date)
+    result = get_categories_coverage(start_date, end_date)
     return result
 
 
 def common_words_activities_months(start_date=None, end_date=None):
-    if type(start_date) is str:
-        start_date = datetime.strptime(f"{start_date} 23:59", "%Y-%m-%d %H:%M").replace(
-            tzinfo=TIMEZONE
-        )
-    if type(end_date) is str:
-        end_date = datetime.strptime(f"{end_date} 23:59", "%Y-%m-%d %H:%M").replace(
-            tzinfo=TIMEZONE
-        )
-    if not end_date:
-        end_date = datetime.now(TIMEZONE)
-    if not start_date:
-        start_date = end_date - timedelta(days=30, hours=23, minutes=59)
+    start_date, end_date = get_dates_range(start_date, end_date)
     activities = Activity.objects.filter(
         start_date__gte=start_date, end_date__lte=end_date
     ).order_by("start_date")

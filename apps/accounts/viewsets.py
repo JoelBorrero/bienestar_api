@@ -130,7 +130,7 @@ class AccountAuthViewSet(viewsets.GenericViewSet):
 
 
 class ActivityViewSet(viewsets.GenericViewSet, mixins.CreateModelMixin):
-    queryset = Activity.objects.filter(deleted=False)
+    queryset = Activity.objects.filter(deleted=False).order_by("-start_date")
     serializer_class = ActivitySerializer
     pagination_class = CustomPagination
     permission_classes = [IsAuthenticated]
