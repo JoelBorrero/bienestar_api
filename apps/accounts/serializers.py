@@ -72,7 +72,7 @@ class UserLoginSerializer(serializers.Serializer):
 class AccountSerializer(serializers.ModelSerializer):
     class Meta:
         model = Account
-        fields = ("email", "first_name", "last_name", "role", "is_active")
+        fields = ("id", "email", "first_name", "last_name", "role", "is_active")
 
 
 class AccountRegisterSerializer(AccountSerializer):
@@ -122,4 +122,4 @@ class ActivitySerializer(serializers.ModelSerializer):
 class GroupSerializer(serializers.ModelSerializer):
     class Meta:
         model = Group
-        fields = ("name", "description", "email", "is_active")
+        fields = ("id", "name", "description", "email", "is_active")

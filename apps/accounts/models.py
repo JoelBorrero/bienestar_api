@@ -19,6 +19,8 @@ class Account(BaseModelUser):
         if redis.get_json("setup").get("disable_user_when_register"):
             self.disable()
         self.set_raw_password()
+        self.email = self.username
+        self.save(update_fields=["email"])
 
     @hook(BEFORE_UPDATE)
     def on_update(self):

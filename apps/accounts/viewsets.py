@@ -17,11 +17,13 @@ from .serializers import (
     UserResetPasswordSetPasswordSerializer,
     get_token,
 )
+from apps.utils.choices import ROLES
 from apps.utils.constants import ACTIVITY_CATEGORIES, ACTIVITY_STATUSES
 from apps.utils.email import send_email
 from apps.utils.serializers import EmptySerializer
 from apps.utils.sms import send_sms
 from apps.utils.permissions import IsAccount, IsRegisterEnabled
+from apps.utils.viewsets import CustomPagination
 
 
 class AccountAuthViewSet(viewsets.GenericViewSet):
@@ -128,14 +130,31 @@ class AccountAuthViewSet(viewsets.GenericViewSet):
 
 
 class ActivityViewSet(viewsets.GenericViewSet, mixins.CreateModelMixin):
-    serializer_class = ActivitySerializer
     queryset = Activity.objects.filter(deleted=False)
+    serializer_class = ActivitySerializer
+    pagination_class = CustomPagination
     permission_classes = [IsAuthenticated]
 
     def list(self, request):
-        queryset = self.queryset.filter(group=request.user.account)
-        serializer = self.serializer_class(queryset, many=True)
-        return Response(serializer.data)
+        if request.user.is_staff:
+            queryset = self.queryset
+        else:
+            queryset = self.queryset.filter(group=request.user.account)
+        result_page = self.paginate_queryset(queryset)
+        serializer = self.serializer_class(result_page, many=True)
+        return self.get_paginated_response(serializer.data)
+
+    def retrieve(self, request, pk=None):
+        instance = self.get_object()
+        if request.user.is_staff or request.user.account == instance.group.account:
+            serializer = self.get_serializer(instance)
+            data = serializer.data
+            data["start_date"] = instance.start_date.strftime("%Y-%m-%d %H:%M")
+            data["end_date"] = instance.end_date.strftime("%Y-%m-%d %H:%M")
+            data["group"] = instance.group.name
+            data["status"] = (instance.status, instance.get_status_display())
+            return Response(data)
+        return Response({"detail": "Not found."}, status=404)
 
     @action(detail=False, methods=["GET"])
     def constants(self, request):
@@ -147,6 +166,25 @@ class ActivityViewSet(viewsets.GenericViewSet, mixins.CreateModelMixin):
         )
 
 
-class GroupViewSet(viewsets.GenericViewSet):
+class GroupViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
     serializer_class = GroupSerializer
     queryset = Group.objects.filter(deleted=False)
+
+
+class UserViewSet(viewsets.GenericViewSet):
+    serializer_class = AccountSerializer
+    queryset = Account.objects.all()
+
+    def list(self, request):
+        data = request.GET
+        role = data.get("role", [r[0] for r in ROLES])
+        if type(role) is str:
+            role = role.split(",")
+        queryset = Account.objects.filter(role__in=role)
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)

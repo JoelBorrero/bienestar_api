@@ -120,7 +120,7 @@ def load_statistics(start_date=None, end_date=None):
     if not end_date:
         end_date = datetime.now(TIMEZONE)
     if not start_date:
-        start_date = end_date - timedelta(days=30, hours=23, minutes=59)
+        start_date = end_date - timedelta(days=180, hours=23, minutes=59)
     coverage_result = get_categories_coverage(start_date, end_date)
     result = {
         "start_date": start_date,
@@ -131,9 +131,24 @@ def load_statistics(start_date=None, end_date=None):
     return result
 
 
-def common_words_activities_months():
+def common_words_activities_months(start_date=None, end_date=None):
+    if type(start_date) is str:
+        start_date = datetime.strptime(f"{start_date} 23:59", "%Y-%m-%d %H:%M").replace(
+            tzinfo=TIMEZONE
+        )
+    if type(end_date) is str:
+        end_date = datetime.strptime(f"{end_date} 23:59", "%Y-%m-%d %H:%M").replace(
+            tzinfo=TIMEZONE
+        )
+    if not end_date:
+        end_date = datetime.now(TIMEZONE)
+    if not start_date:
+        start_date = end_date - timedelta(days=30, hours=23, minutes=59)
+    activities = Activity.objects.filter(
+        start_date__gte=start_date, end_date__lte=end_date
+    ).order_by("start_date")
     dates = []
-    for activity in Activity.objects.order_by("start_date"):
+    for activity in activities:
         month = activity.start_date.month
         year = activity.start_date.year
         date = {"month": month, "year": year}
@@ -150,8 +165,7 @@ def common_words_activities_months():
     return dates
 
 
-def common_words_activities():
-    activities = Activity.objects.all()
+def common_words_activities(activities):
     text = ""
     for activity in activities:
         text += " " + activity.name + " " + activity.description
@@ -179,10 +193,12 @@ def common_words_activities():
     stopw.extend(punctuation)
     words = [token for token in tokens_lower if token not in stopw]
 
-    snowball_stemmer = SnowballStemmer("spanish")
-    stemmers = [snowball_stemmer.stem(word) for word in words]
-    final = [stem for stem in stemmers if stem.isalpha() and len(stem) > 1]
-    fdist_stemming = nltk.FreqDist(final)
-
-    # fdist = nltk.FreqDist(words) # Frequency of words without stemming
-    return fdist_stemming
+    do_stemming = False
+    if do_stemming:
+        snowball_stemmer = SnowballStemmer("spanish")
+        stemmers = [snowball_stemmer.stem(word) for word in words]
+        final = [stem for stem in stemmers if stem.isalpha() and len(stem) > 1]
+        fdist = nltk.FreqDist(final)
+    else:
+        fdist = nltk.FreqDist(words)  # Frequency of words without stemming
+    return fdist
