@@ -1,11 +1,7 @@
 from rest_framework import serializers
 
 from .models import Record, Zone
-from apps.utils.exceptions import (
-    DateValidationError,
-    PeopleValidationError,
-    SupervisorValidationError,
-)
+from apps.utils.choices import PROMOTER, SUPERVISOR
 
 
 def create_record(validated_data: dict, extra_data: dict):
@@ -29,11 +25,17 @@ def create_record(validated_data: dict, extra_data: dict):
 def validate_record(data: dict):
     start, end = data["start_date"], data["end_date"]
     if start > end or start.minute != 30 or end.minute != 30:
-        raise DateValidationError()
-    if data.get("supervisor", True) == data.get("promoter"):
-        raise PeopleValidationError()
-    if bool(data.get("supervisor")) != bool(data.get("was_supervised")):
-        raise SupervisorValidationError()
+        raise serializers.ValidationError("Dates must be closed in 0 or 30 minutes.")
+    supervisor = data.get("supervisor")
+    promoter = data.get("promoter")
+    if supervisor and supervisor.role != SUPERVISOR:
+        raise serializers.ValidationError("Supervisor is not a supervisor")
+    if promoter and promoter.role != PROMOTER:
+        raise serializers.ValidationError("Promoter is not a promoter")
+    if bool(supervisor) != bool(data.get("was_supervised")):
+        raise serializers.ValidationError(
+            "Selected supervisor and was_supervised field didn't match."
+        )
 
 
 class PromoterRecordSerializer(serializers.ModelSerializer):
@@ -48,9 +50,17 @@ class PromoterRecordSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Record
-        exclude = ("is_signed", "promoter")
+        exclude = (
+            "deleted",
+            "is_signed",
+            "promoter",
+            "supervisor_notes",
+            "supervisor_wake_up_calls",
+            "updated_at",
+        )
         extra_kwargs = {
             "people_called": {"required": True},
+            "promoter_notes": {"required": True},
             "wake_up_calls": {"required": True},
         }
 
@@ -58,7 +68,7 @@ class PromoterRecordSerializer(serializers.ModelSerializer):
 class RecordSerializer(serializers.ModelSerializer):
     class Meta:
         model = Record
-        exclude = ("updated_at", "deleted")
+        exclude = ("deleted", "updated_at")
 
 
 class SupervisorRecordSerializer(serializers.ModelSerializer):
@@ -78,13 +88,19 @@ class SupervisorRecordSerializer(serializers.ModelSerializer):
     class Meta:
         model = Record
         exclude = (
-            "was_supervised",
-            "supervisor",
+            "deleted",
             "is_signed",
-            "wake_up_calls",
             "people_called",
+            "promoter_notes",
+            "supervisor",
+            "updated_at",
+            "wake_up_calls",
+            "was_supervised",
         )
-        extra_kwargs = {"supervisor_wake_up_calls": {"required": True}}
+        extra_kwargs = {
+            "supervisor_notes": {"required": True},
+            "supervisor_wake_up_calls": {"required": True},
+        }
 
 
 class ZoneSerializer(serializers.ModelSerializer):

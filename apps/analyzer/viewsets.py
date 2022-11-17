@@ -24,9 +24,12 @@ class StatisticsViewSet(viewsets.GenericViewSet):
         return Response(data)
 
     @action(detail=False, methods=["GET"])
-    def common_words(self, _):
+    def common_words(self, request):
         """Returns most common words in activities by month."""
-        data = common_words_activities_months()
+        data = request.query_params
+        start_date = data.get("start_date")
+        end_date = data.get("end_date")
+        data = common_words_activities_months(start_date, end_date)
         return Response(data)
 
 

@@ -20,7 +20,9 @@ class IsPromoter(BasePermission):
     """
 
     def has_permission(self, request, view):
-        return bool(request.user.account.role == PROMOTER)
+        if hasattr(request.user, "account"):
+            return bool(request.user.account.role == PROMOTER)
+        return False
 
 
 class IsRegisterEnabled(BasePermission):
@@ -40,4 +42,6 @@ class IsSupervisor(BasePermission):
     """
 
     def has_permission(self, request, view):
-        return bool(request.user.account.role == SUPERVISOR)
+        if hasattr(request.user, "account"):
+            return bool(request.user.account.role == SUPERVISOR)
+        return False
