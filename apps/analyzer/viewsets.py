@@ -5,7 +5,7 @@ from rest_framework.response import Response
 
 from .models import UploadedReport
 from .serializers import UploadedReportSerializer
-from .tasks import load_statistics, common_words_activities_months, processing_date, processing_main
+from .tasks import load_statistics, common_words_activities_months, processing_date, processing_main, graph_data_pie_chart_type, graph_data_categories_month, graph_data_common_words_months
 from apps.utils.serializers import EmptySerializer
 
 
@@ -42,6 +42,28 @@ class StatisticsViewSet(viewsets.GenericViewSet):
         data = processing_main()
         return Response(data)
 
+    @action(detail=False, methods=["GET"])
+    def graph_data_pie_chart_type(self, _):
+        """Returns pie chart data for activity type"""
+        data = graph_data_pie_chart_type()
+        return Response(data)
+
+    @action(detail=False, methods=["GET"])
+    def graph_data_categories_month(self, request):
+        """Returns graph data for activity categories for a month"""
+        data = request.query_params
+        month = data.get("month")
+        data = graph_data_categories_month(month)
+        return Response(data)
+
+    @action(detail=False, methods=["GET"])
+    def graph_data_common_words_months(self, request):
+        """Returns the most common words on activities for a month"""
+        data = request.query_params
+        month = data.get("month")
+        amount = data.get("amount")
+        data = graph_data_common_words_months(month, amount)
+        return Response(data)
 
 class UploadedReportViewSet(viewsets.ModelViewSet):
     serializer_class = UploadedReportSerializer
