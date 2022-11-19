@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 import nltk
 import pandas as pd
 from celery import shared_task
-from nltk import wordpunct_tokenize
+from nltk import wordpunct_tokenize, word_tokenize
 from nltk.corpus import stopwords
 from nltk.stem import SnowballStemmer
 
@@ -190,3 +190,118 @@ def common_words_activities(activities):
     else:
         fdist = nltk.FreqDist(words)  # Frequency of words without stemming
     return fdist
+
+
+def processing_main():
+    """Obtener todos las palabras claves que se repitan mas de 10 veces de los titulos de los articulos"""
+    dict_verbs = {}
+    filter_stopwords = stopwords.words('spanish')
+
+    data = pd.DataFrame(list(Activity.objects.all().values('name', 'start_date')))
+    data["name"] = data["name"].str.lower()
+    data["name"] = (
+        data["name"]
+        .str.normalize("NFKD")
+        .str.encode("ascii", errors="ignore")
+        .str.decode("utf-8")
+    )
+    data["name"] = data["name"].str.replace("s ", " ")
+    data["name"] = data["name"].str.replace("es ", " ")
+    data["name"] = data["name"].str.replace("as ", " ")
+    data["name"] = data["name"].str.replace("os ", " ")
+
+    for i in range(len(data)):
+        row = data.iloc[i]
+        row = row.dropna()
+        title = row['name']
+        date = row['start_date']
+        tokens = word_tokenize(title)
+        for token in tokens:
+            if token in dict_verbs:
+                if date in dict_verbs[token]:
+                    dict_verbs[token][date] += 1
+                else:
+                    dict_verbs[token][date] = 1
+            else:
+                dict_verbs[token] = {}
+    for key in list(dict_verbs.keys()):
+        if len(dict_verbs[key]) < 10:
+            del dict_verbs[key]
+        if key in filter_stopwords:
+            try:
+                dict_verbs.pop(key)
+            except:
+                pass
+        if len(key) < 3:
+            try:
+                dict_verbs.pop(key)
+            except:
+                pass
+
+    dict_for_month = {}
+    for key in dict_verbs:
+        for date in dict_verbs[key]:
+            try:
+                month = date.month
+            except:
+                continue
+            if month in dict_for_month:
+                if key in dict_for_month[month]:
+                    dict_for_month[month][key] += dict_verbs[key][date]
+                else:
+                    dict_for_month[month][key] = dict_verbs[key][date]
+            else:
+                dict_for_month[month] = {}
+                dict_for_month[month][key] = dict_verbs[key][date]
+    return dict_for_month
+
+
+def processing_date():
+    """Obtener todos las palabras claves que se repitan mas de 10 veces de los titulos de los articulos"""
+    dict_verbs = {}
+    filter_stopwords = stopwords.words("spanish")
+
+    data = pd.DataFrame(list(Activity.objects.all().values('name', 'start_date')))
+    data["name"] = data["name"].str.lower()
+    data["name"] = (
+        data["name"]
+        .str.normalize("NFKD")
+        .str.encode("ascii", errors="ignore")
+        .str.decode("utf-8")
+    )
+    data["name"] = data["name"].str.replace("s ", " ")
+    data["name"] = data["name"].str.replace("es ", " ")
+    data["name"] = data["name"].str.replace("as ", " ")
+    data["name"] = data["name"].str.replace("os ", " ")
+
+    for i in range(len(data)):
+        row = data.iloc[i]
+        row = row.dropna()
+        title = row["name"]
+        date = row["start_date"]
+        tokens = word_tokenize(title)
+        for token in tokens:
+            if token not in filter_stopwords:
+                if token not in dict_verbs:
+                    dict_verbs[token] = []
+                dict_verbs[token].append(date)
+
+    for key in list(dict_verbs.keys()):
+        if len(dict_verbs[key]) < 20:
+            del dict_verbs[key]
+        if key in filter_stopwords:
+            try:
+                dict_verbs.pop(key)
+            except:
+                pass
+        if len(key) < 3:
+            try:
+                dict_verbs.pop(key)
+            except:
+                pass
+
+    #ordenar la data por fechas
+    for key in dict_verbs:
+        dict_verbs[key] = sorted(dict_verbs[key])
+
+    return dict_verbs
