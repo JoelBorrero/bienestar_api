@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 
 import nltk
 import pandas as pd
+import numpy as np
 from celery import shared_task
 from nltk import wordpunct_tokenize
 from nltk.corpus import stopwords
@@ -190,3 +191,83 @@ def common_words_activities(activities):
     else:
         fdist = nltk.FreqDist(words)  # Frequency of words without stemming
     return fdist
+
+
+def generate_color():
+    return f"rgb({np.random.choice(range(256))}, {np.random.choice(range(256))}, {np.random.choice(range(256))})"
+
+
+def graph_data_common_words_months(month, amount):
+    amount = int(amount) if amount else 5
+    month = month if month else datetime.now(TIMEZONE).month
+    activities = Activity.objects.filter(start_date__month=month)
+    words_data = common_words_activities(activities).most_common(amount)
+
+    labels = []
+    data = []
+    for d in words_data:
+        labels.append(d[0])
+        data.append(d[1])
+
+    return {
+        "labels": labels,
+        "datasets": [{
+            "label": "Palabra",
+            "data": data,
+            "backgroundColor": [generate_color() for _ in range(len(data))],
+            "borderColor": [generate_color() for _ in range(len(data))],
+            "tension": 0.4,
+            "fill": True,
+            "pointStyle": 'rect',
+            "pointBorderColor": 'blue',
+            "pointBackgroundColor": '#fff',
+            "showLine": True
+        }]
+    }
+
+
+def graph_data_pie_chart_type():
+    virtual_activities = Activity.objects.filter(is_virtual=True).count()
+    on_site_activities = Activity.objects.filter(is_virtual=False).count()
+    labels = ["Virtual", "Presencial"]
+    datasets = [
+        {
+            "label": "Tipo de actividad",
+            "data": [virtual_activities, on_site_activities],
+            "backgroundColor": ["#4bb2dd", "#c95355"],
+            "borderColor": ["#fff", "#fff"],
+            "tension": 0.4,
+            "fill": True,
+            "pointStyle": 'rect',
+            "pointBorderColor": 'blue',
+            "pointBackgroundColor": '#fff',
+            "showLine": True
+        }
+    ]
+    return {"labels": labels, "datasets": datasets}
+
+
+def graph_data_categories_month(month):
+    month = month if month else datetime.now(TIMEZONE).month
+    labels = [category[1] for category in ACTIVITY_CATEGORIES]
+    categories = [category[0] for category in ACTIVITY_CATEGORIES]
+    data = []
+    for category in categories:
+        count = Activity.objects.filter(start_date__month=month, category=category).count()
+        data.append(count)
+
+    return {
+        "labels": labels,
+        "datasets": [{
+            "label": "Categoría",
+            "data": data,
+            "backgroundColor": [generate_color() for _ in range(len(categories))],
+            "borderColor": [generate_color() for _ in range(len(categories))],
+            "tension": 0.4,
+            "fill": True,
+            "pointStyle": 'rect',
+            "pointBorderColor": 'blue',
+            "pointBackgroundColor": '#fff',
+            "showLine": True
+        }]
+    }
