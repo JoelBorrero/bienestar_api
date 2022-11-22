@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 
 import nltk
 import pandas as pd
+import numpy as np
 from celery import shared_task
 from nltk import wordpunct_tokenize
 from nltk.corpus import stopwords
@@ -190,3 +191,159 @@ def common_words_activities(activities):
     else:
         fdist = nltk.FreqDist(words)  # Frequency of words without stemming
     return fdist
+
+
+def graph_data_common_words_months(amount_month, amount_total, **kwargs):
+
+    def get_top_words(data, n):
+        top = sorted(data.items(), key=lambda x: x[1]['total'], reverse=True)[:n]
+        return dict(top)
+
+    def process_parameters(**kwargs):
+        try:
+            end = int(kwargs['end_month'][0])
+        except KeyError:
+            end = current_date.month
+
+        try:
+            start = int(kwargs['start_month'][0])
+        except KeyError:
+            start = end - 5
+            
+        filters = [
+            {"start_date__month": ((i + start - 1) % 12) + 1}
+            for i in range((end - start) % 12 + 1)
+        ]
+        return filters
+
+    def get_month_name(number):
+        datetime_object = datetime.strptime(str(number), "%m")
+        month_name = datetime_object.strftime("%b")
+        return month_name
+
+    current_date = datetime.now(TIMEZONE)
+    amount_total = int(amount_total) if amount_total else 5
+
+    filters = process_parameters(**kwargs)
+    common_words_months = []
+    for filter in filters:
+        activities = Activity.objects.filter(**filter)
+        words = common_words_activities(activities).most_common(amount_month)
+        common_words_months.append(words)
+
+    counts = {}
+    for month, words in enumerate(common_words_months):
+        for word in words:
+            try:
+                counts[word[0]]["list"].append({"month": month, "amount": word[1]})
+                counts[word[0]]["total"] = counts[word[0]]["total"] + word[1]
+            except:
+                counts[word[0]] = {"list": [{"month": month, "amount": word[1]}], "total": word[1]}
+
+
+    top_words = get_top_words(counts, amount_total)
+    final_data = []
+    for word in top_words:
+        data_months = np.zeros(len(filters))
+        months = top_words[word]['list']
+
+        for month in months:
+            data_months[month['month']] = month['amount']
+
+        final_data.append({"label": word, "data": data_months})
+
+    return {
+        "labels": [get_month_name(i['start_date__month']) for i in filters],
+        "datasets": [{
+            "label": word_data['label'],
+            "data": word_data['data'],
+            "backgroundColor": generate_color(),
+            "borderColor": generate_color(),
+            "tension": 0.4,
+            "fill": False,
+            "pointStyle": 'rect',
+            "pointBorderColor": 'blue',
+            "pointBackgroundColor": '#fff',
+            "showLine": True
+        } for word_data in final_data],
+    }
+
+
+def generate_color():
+    return f"rgb({np.random.choice(range(256))}, {np.random.choice(range(256))}, {np.random.choice(range(256))})"
+
+
+def graph_data_common_words_month(month, amount):
+    amount = int(amount) if amount else 5
+    month = month if month else datetime.now(TIMEZONE).month
+    activities = Activity.objects.filter(start_date__month=month)
+    words_data = common_words_activities(activities).most_common(amount)
+
+    labels = []
+    data = []
+    for d in words_data:
+        labels.append(d[0])
+        data.append(d[1])
+
+    return {
+        "labels": labels,
+        "datasets": [{
+            "label": "Palabra",
+            "data": data,
+            "backgroundColor": [generate_color() for _ in range(len(data))],
+            "borderColor": [generate_color() for _ in range(len(data))],
+            "tension": 0.4,
+            "fill": True,
+            "pointStyle": 'rect',
+            "pointBorderColor": 'blue',
+            "pointBackgroundColor": '#fff',
+            "showLine": True
+        }]
+    }
+
+
+def graph_data_pie_chart_type():
+    virtual_activities = Activity.objects.filter(is_virtual=True).count()
+    on_site_activities = Activity.objects.filter(is_virtual=False).count()
+    labels = ["Virtual", "Presencial"]
+    datasets = [
+        {
+            "label": "Tipo de actividad",
+            "data": [virtual_activities, on_site_activities],
+            "backgroundColor": ["#4bb2dd", "#c95355"],
+            "borderColor": ["#fff", "#fff"],
+            "tension": 0.4,
+            "fill": True,
+            "pointStyle": 'rect',
+            "pointBorderColor": 'blue',
+            "pointBackgroundColor": '#fff',
+            "showLine": True
+        }
+    ]
+    return {"labels": labels, "datasets": datasets}
+
+
+def graph_data_categories_month(month):
+    month = month if month else datetime.now(TIMEZONE).month
+    labels = [category[1] for category in ACTIVITY_CATEGORIES]
+    categories = [category[0] for category in ACTIVITY_CATEGORIES]
+    data = []
+    for category in categories:
+        count = Activity.objects.filter(start_date__month=month, category=category).count()
+        data.append(count)
+
+    return {
+        "labels": labels,
+        "datasets": [{
+            "label": "Categoría",
+            "data": data,
+            "backgroundColor": [generate_color() for _ in range(len(categories))],
+            "borderColor": [generate_color() for _ in range(len(categories))],
+            "tension": 0.4,
+            "fill": True,
+            "pointStyle": 'rect',
+            "pointBorderColor": 'blue',
+            "pointBackgroundColor": '#fff',
+            "showLine": True
+        }]
+    }
