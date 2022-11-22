@@ -51,9 +51,8 @@ class StatisticsViewSet(viewsets.GenericViewSet):
     def graph_data_common_words_months(self, request):
         """Returns the most common words on activities for a month"""
         data = request.query_params
-        month = data.get("month")
         amount = data.get("amount")
-        data = graph_data_common_words_months(month, amount)
+        data = graph_data_common_words_months(40, amount, **data)
         return Response(data)
 
 

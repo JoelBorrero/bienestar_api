@@ -193,11 +193,87 @@ def common_words_activities(activities):
     return fdist
 
 
+def graph_data_common_words_months(amount_month, amount_total, **kwargs):
+
+    def get_top_words(data, n):
+        top = sorted(data.items(), key=lambda x: x[1]['total'], reverse=True)[:n]
+        return dict(top)
+
+    def process_parameters(**kwargs):
+        try:
+            end = int(kwargs['end_month'][0])
+        except KeyError:
+            end = current_date.month
+
+        try:
+            start = int(kwargs['start_month'][0])
+        except KeyError:
+            start = end - 5
+            
+        filters = [
+            {"start_date__month": ((i + start - 1) % 12) + 1}
+            for i in range((end - start) % 12 + 1)
+        ]
+        return filters
+
+    def get_month_name(number):
+        datetime_object = datetime.strptime(str(number), "%m")
+        month_name = datetime_object.strftime("%b")
+        return month_name
+
+    current_date = datetime.now(TIMEZONE)
+    amount_total = int(amount_total) if amount_total else 5
+
+    filters = process_parameters(**kwargs)
+    common_words_months = []
+    for filter in filters:
+        activities = Activity.objects.filter(**filter)
+        words = common_words_activities(activities).most_common(amount_month)
+        common_words_months.append(words)
+
+    counts = {}
+    for month, words in enumerate(common_words_months):
+        for word in words:
+            try:
+                counts[word[0]]["list"].append({"month": month, "amount": word[1]})
+                counts[word[0]]["total"] = counts[word[0]]["total"] + word[1]
+            except:
+                counts[word[0]] = {"list": [{"month": month, "amount": word[1]}], "total": word[1]}
+
+
+    top_words = get_top_words(counts, amount_total)
+    final_data = []
+    for word in top_words:
+        data_months = np.zeros(len(filters))
+        months = top_words[word]['list']
+
+        for month in months:
+            data_months[month['month']] = month['amount']
+
+        final_data.append({"label": word, "data": data_months})
+
+    return {
+        "labels": [get_month_name(i['start_date__month']) for i in filters],
+        "datasets": [{
+            "label": word_data['label'],
+            "data": word_data['data'],
+            "backgroundColor": generate_color(),
+            "borderColor": generate_color(),
+            "tension": 0.4,
+            "fill": False,
+            "pointStyle": 'rect',
+            "pointBorderColor": 'blue',
+            "pointBackgroundColor": '#fff',
+            "showLine": True
+        } for word_data in final_data],
+    }
+
+
 def generate_color():
     return f"rgb({np.random.choice(range(256))}, {np.random.choice(range(256))}, {np.random.choice(range(256))})"
 
 
-def graph_data_common_words_months(month, amount):
+def graph_data_common_words_month(month, amount):
     amount = int(amount) if amount else 5
     month = month if month else datetime.now(TIMEZONE).month
     activities = Activity.objects.filter(start_date__month=month)
