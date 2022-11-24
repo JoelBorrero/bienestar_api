@@ -6,6 +6,7 @@ from rest_framework.response import Response
 
 from apps.utils.permissions import IsPromoter, IsSupervisor
 from apps.utils.choices import PROMOTER, SUPERVISOR
+from apps.utils.viewsets import CustomPagination
 from .models import Record, Zone
 from .serializers import (
     PromoterRecordSerializer,
@@ -29,6 +30,7 @@ class RecordViewSet(viewsets.GenericViewSet):
     serializer_class = RecordSerializer
     queryset = Record.objects.filter(deleted=False)
     permission_classes = (IsPromoter | IsSupervisor | IsAdminUser,)
+    pagination_class = CustomPagination
 
     @staticmethod
     def create(request):
@@ -42,7 +44,7 @@ class RecordViewSet(viewsets.GenericViewSet):
         if serializer.is_valid(raise_exception=True):
             record, created = serializer.save()
             data = serializer_class(record).data
-        return Response({"data": data, "created": created})
+        return Response({"data": data, "created": created}, 201)
 
     @staticmethod
     def list(request, *args, **kwargs):
@@ -75,10 +77,4 @@ class ZoneViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
     serializer_class = ZoneSerializer
     queryset = Zone.objects.all()
     permission_classes = (IsAuthenticated,)
-
-    # @action(detail=False, methods=["GET"])
-    # def zones(self, request):
-    #     """Promoter reports that are waiting to sign."""
-    #     zones = Zone.objects.all()
-    #     data = RecordSerializer(zones, many=True)
-    #     return Response({"data": data.data})
+    pagination_class = CustomPagination

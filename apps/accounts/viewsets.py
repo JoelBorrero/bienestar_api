@@ -22,21 +22,18 @@ from apps.utils.constants import ACTIVITY_CATEGORIES, ACTIVITY_STATUSES
 from apps.utils.email import send_email
 from apps.utils.serializers import EmptySerializer
 from apps.utils.sms import send_sms
-from apps.utils.permissions import IsAccount, IsRegisterEnabled
+from apps.utils.permissions import IsRegisterEnabled
 from apps.utils.viewsets import CustomPagination
 
 
 class AccountAuthViewSet(viewsets.GenericViewSet):
     serializer_class = AccountSerializer
     queryset = Account.objects.filter(deleted=False)
-    permission_classes = [
-        IsAuthenticated,
-        IsAccount,
-    ]
+    permission_classes = [AllowAny]
 
     @action(
-        detail=False,
-        methods=["POST"],
+        ["POST"],
+        False,
         permission_classes=[AllowAny, IsRegisterEnabled],
         serializer_class=AccountRegisterSerializer,
     )
@@ -55,12 +52,7 @@ class AccountAuthViewSet(viewsets.GenericViewSet):
                 data["token"] = token.key
         return Response(data)
 
-    @action(
-        detail=False,
-        methods=["POST"],
-        permission_classes=[AllowAny],
-        serializer_class=UserLoginSerializer,
-    )
+    @action(["POST"], False, serializer_class=UserLoginSerializer)
     def login(self, request):
         """User sign in."""
         serializer = self.serializer_class(data=request.data)
@@ -68,7 +60,12 @@ class AccountAuthViewSet(viewsets.GenericViewSet):
         user, token = serializer.save()
         return Response({"user": user, "token": token})
 
-    @action(detail=False, methods=["POST"], serializer_class=EmptySerializer)
+    @action(
+        ["POST"],
+        False,
+        permission_classes=[IsAuthenticated],
+        serializer_class=EmptySerializer,
+    )
     def logout(self, request):
         """User sign out"""
         token = Token.objects.filter(user=request.user.id).first()
@@ -77,12 +74,7 @@ class AccountAuthViewSet(viewsets.GenericViewSet):
             token.delete()
         return Response({"success": True})
 
-    @action(
-        detail=False,
-        methods=["POST"],
-        permission_classes=[AllowAny],
-        serializer_class=SendResetCodeSerializer,
-    )
+    @action(["POST"], False, serializer_class=SendResetCodeSerializer)
     def send_reset_code(self, request):
         email = request.data.get("email")
         user = get_object_or_404(Account, username=email)
@@ -103,25 +95,27 @@ class AccountAuthViewSet(viewsets.GenericViewSet):
             data = "Missing or wrong parameter"
         return Response({"success": success, "data": data})
 
-    @action(
-        detail=False,
-        methods=["POST"],
-        permission_classes=[AllowAny],
-        serializer_class=UserResetPasswordSetPasswordSerializer,
-    )
+    @action(["POST"], False, serializer_class=UserResetPasswordSetPasswordSerializer)
+    def check_code_is_valid(self, request):
+        email = request.data.get("email")
+        code = request.data.get("code")
+        user = get_object_or_404(Account, username=email, reset_password_code=code)
+        return Response({"success": bool(user)})
+
+    @action(["POST"], False, serializer_class=UserResetPasswordSetPasswordSerializer)
     def set_new_password(self, request):
         email = request.data.get("email")
         code = request.data.get("code")
         password = request.data.get("password")
         user = get_object_or_404(Account, username=email, reset_password_code=code)
-        if all((email, code, password)):
+        if all((user, email, code, password)):
             user.reset_password(password)
             success = True
         else:
             success = False
         return Response({"success": success})
 
-    @action(detail=False, methods=["PUT"])
+    @action(["PUT"], False)
     def update_user(self, request):
         serializer = self.serializer_class(request.user.account, request.data)
         if serializer.is_valid():
@@ -156,7 +150,7 @@ class ActivityViewSet(viewsets.GenericViewSet, mixins.CreateModelMixin):
             return Response(data)
         return Response({"detail": "Not found."}, status=404)
 
-    @action(detail=False, methods=["GET"])
+    @action(["GET"], False)
     def constants(self, request):
         return Response(
             {
@@ -174,6 +168,7 @@ class GroupViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
 class UserViewSet(viewsets.GenericViewSet):
     serializer_class = AccountSerializer
     queryset = Account.objects.all()
+    pagination_class = CustomPagination
 
     def list(self, request):
         data = request.GET
