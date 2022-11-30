@@ -1,6 +1,6 @@
 from rest_framework.permissions import BasePermission
 
-from .choices import PROMOTER, SUPERVISOR
+from .choices import ADMIN, PROMOTER, SUPERVISOR
 from apps.utils.exceptions import RegisterDisabledValidationError
 from apps.utils.redis import client as redis
 
@@ -12,6 +12,17 @@ class IsAccount(BasePermission):
 
     def has_permission(self, request, view):
         return hasattr(request.user, "account")
+
+
+class IsAdmin(BasePermission):
+    """
+    Allows access only to admins.
+    """
+
+    def has_permission(self, request, view):
+        if hasattr(request.user, "account"):
+            return bool(request.user.account.role == ADMIN)
+        return request.user.is_staff
 
 
 class IsPromoter(BasePermission):

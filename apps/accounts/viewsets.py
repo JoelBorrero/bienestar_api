@@ -22,7 +22,7 @@ from apps.utils.constants import ACTIVITY_CATEGORIES, ACTIVITY_STATUSES
 from apps.utils.email import send_email
 from apps.utils.serializers import EmptySerializer
 from apps.utils.sms import send_sms
-from apps.utils.permissions import IsRegisterEnabled
+from apps.utils.permissions import IsAdmin, IsRegisterEnabled
 from apps.utils.viewsets import CustomPagination
 
 
@@ -130,7 +130,7 @@ class ActivityViewSet(viewsets.GenericViewSet, mixins.CreateModelMixin):
     permission_classes = [IsAuthenticated]
 
     def list(self, request):
-        if request.user.is_staff:
+        if IsAdmin:
             queryset = self.queryset
         else:
             queryset = self.queryset.filter(group=request.user.account)
@@ -140,7 +140,7 @@ class ActivityViewSet(viewsets.GenericViewSet, mixins.CreateModelMixin):
 
     def retrieve(self, request, pk=None):
         instance = self.get_object()
-        if request.user.is_staff or request.user.account == instance.group.account:
+        if IsAdmin or request.user.account == instance.group.account:
             serializer = self.get_serializer(instance)
             data = serializer.data
             data["start_date"] = instance.start_date.strftime("%Y-%m-%d %H:%M")
