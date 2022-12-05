@@ -189,4 +189,5 @@ def common_words_activities(activities):
         fdist = nltk.FreqDist(final)
     else:
         fdist = nltk.FreqDist(words)  # Frequency of words without stemming
-    return fdist
+    response = fdist.most_common(10)
+    return {date[0]: date[1] for date in response}
