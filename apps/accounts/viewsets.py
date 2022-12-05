@@ -130,7 +130,7 @@ class ActivityViewSet(viewsets.GenericViewSet, mixins.CreateModelMixin):
     permission_classes = [IsAuthenticated]
 
     def list(self, request):
-        if IsAdmin:
+        if IsAdmin().check(request):
             queryset = self.queryset
         else:
             queryset = self.queryset.filter(group=request.user.account)
@@ -140,7 +140,7 @@ class ActivityViewSet(viewsets.GenericViewSet, mixins.CreateModelMixin):
 
     def retrieve(self, request, pk=None):
         instance = self.get_object()
-        if IsAdmin or request.user.account == instance.group.account:
+        if IsAdmin().check(request) or request.user.account == instance.group.account:
             serializer = self.get_serializer(instance)
             data = serializer.data
             data["start_date"] = instance.start_date.strftime("%Y-%m-%d %H:%M")

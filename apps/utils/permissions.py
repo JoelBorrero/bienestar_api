@@ -24,6 +24,9 @@ class IsAdmin(BasePermission):
             return bool(request.user.account.role == ADMIN)
         return request.user.is_staff
 
+    def check(self, request):
+        return self.has_permission(request, None)
+
 
 class IsPromoter(BasePermission):
     """
