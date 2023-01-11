@@ -1,3 +1,4 @@
+from django.template.defaultfilters import date as _date
 from rest_framework import serializers
 
 from .models import Record, Zone
@@ -66,6 +67,21 @@ class PromoterRecordSerializer(serializers.ModelSerializer):
 
 
 class RecordSerializer(serializers.ModelSerializer):
+    start_date = serializers.SerializerMethodField()
+    end_date = serializers.SerializerMethodField()
+    duration = serializers.SerializerMethodField()
+    zone = serializers.SlugRelatedField(slug_field="name", read_only=True)
+    supervisor = serializers.SlugRelatedField(slug_field="first_name", read_only=True)
+
+    def get_duration(self, obj):
+        return (obj.end_date - obj.start_date).seconds // 3600
+
+    def get_start_date(self, obj):
+        return _date(obj.start_date, "D j M - f A")
+
+    def get_end_date(self, obj):
+        return _date(obj.end_date, "D j M - f A")
+
     class Meta:
         model = Record
         exclude = ("deleted", "updated_at")
@@ -107,4 +123,3 @@ class ZoneSerializer(serializers.ModelSerializer):
     class Meta:
         model = Zone
         fields = ("id", "name")
-        # extra_kwargs = {"id": {"read_only": True}}
